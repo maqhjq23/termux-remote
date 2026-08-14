@@ -11,31 +11,30 @@
 :root{
   --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
   --text:#e6edf3;--text-dim:#8b949e;--green:#3fb950;--green-dim:rgba(63,185,80,.15);
-  --red:#f85149;--yellow:#d29922;--blue:#58a6ff;--orange:#d18616;
+  --red:#f85149;--yellow:#d29922;--blue:#58a6ff;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;font-size:14px}
 
-/* === Animations === */
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeInUp{from{opacity:0;transform:translate(-50%,-50%) translateY(16px)}to{opacity:1;transform:translate(-50%,-50%) translateY(0)}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
 @keyframes glow{0%,100%{box-shadow:0 0 4px var(--green)}50%{box-shadow:0 0 12px var(--green),0 0 24px rgba(63,185,80,.3)}}
-@keyframes dotBounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 @keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 @keyframes progressBar{from{width:0}to{width:100%}}
+@keyframes dotPulse{0%,100%{opacity:.3}50%{opacity:1}}
 
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-.spinner-sm{width:18px;height:18px;border-width:2px;margin:0}
+.spinner-sm{width:16px;height:16px;border-width:2px;margin:0;display:inline-block;vertical-align:middle}
 .pulse{animation:pulse 1.5s ease-in-out infinite}
 .fade-in{animation:fadeIn .4s ease-out}
 
 /* === Toast === */
 #toast-container{position:fixed;top:44px;right:12px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{padding:10px 16px;border-radius:6px;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:toastIn .3s ease-out;min-width:240px;max-width:380px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.toast{padding:10px 16px;border-radius:6px;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:toastIn .3s ease-out;min-width:220px;max-width:380px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
 .toast.out{animation:toastOut .3s ease-in forwards}
 .toast.info{background:var(--surface2);border:1px solid var(--blue);color:var(--blue)}
 .toast.success{background:var(--surface2);border:1px solid var(--green);color:var(--green)}
@@ -43,56 +42,48 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .toast.warn{background:var(--surface2);border:1px solid var(--yellow);color:var(--yellow)}
 .toast i{font-size:14px;flex-shrink:0}
 .toast .toast-msg{flex:1;line-height:1.4}
-.toast .toast-close{cursor:pointer;opacity:.6;padding:0 2px}
-.toast .toast-close:hover{opacity:1}
+.toast .toast-close{cursor:pointer;opacity:.6;padding:0 2px}.toast .toast-close:hover{opacity:1}
 
 /* === Status Bar === */
-#statusbar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:12px;justify-content:space-between;flex-shrink:0}
-#statusbar .left{display:flex;align-items:center;gap:10px}
-#statusbar .title{font-size:13px;font-weight:600;color:var(--green)}
-#statusbar .title i{margin-right:6px}
-.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:.3s;flex-shrink:0}
+#statusbar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:10px;justify-content:space-between;flex-shrink:0}
+#statusbar .left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+#statusbar .title{font-size:13px;font-weight:600;color:var(--green);white-space:nowrap}
+#statusbar .title i{margin-right:4px}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:background .3s,box-shadow .3s;flex-shrink:0}
 .conn-dot.on{background:var(--green);animation:glow 2s ease-in-out infinite}
 .conn-dot.warn{background:var(--yellow);animation:pulse 1s ease-in-out infinite}
-#statusbar .right{display:flex;align-items:center;gap:8px}
-#statusbar .right button{background:var(--border);border:none;color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:5px;transition:.2s}
+#statusLabel{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#statusbar .right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+#statusbar .right button{background:var(--border);border:none;color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;transition:.2s}
 #statusbar .right button:hover{background:#484f58}
 #statusbar .right button.active{background:var(--green);color:#000}
-#statusLabel{font-size:11px;color:var(--text-dim);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* === Main Layout === */
+/* === Main === */
 #main{display:flex;height:calc(100vh - 36px);position:relative}
-
-/* === Terminal === */
 #terminal-wrap{flex:1;position:relative;overflow:hidden}
 #terminal{width:100%;height:100%;padding:4px 0}
 .xterm{height:100%}
-.xterm-viewport::-webkit-scrollbar{width:6px}
-.xterm-viewport::-webkit-scrollbar-track{background:transparent}
-.xterm-viewport::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.xterm-viewport::-webkit-scrollbar{width:6px}.xterm-viewport::-webkit-scrollbar-track{background:transparent}.xterm-viewport::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 
 /* === File Panel === */
-#filepanel{position:absolute;right:0;top:0;bottom:0;width:360px;background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s ease;z-index:20;display:flex;flex-direction:column}
+#filepanel{position:absolute;right:0;top:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s ease;z-index:20;display:flex;flex-direction:column}
 #filepanel.open{transform:translateX(0)}
-#filepanel .fp-header{height:40px;background:#1c2128;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;justify-content:space-between;flex-shrink:0}
+#filepanel .fp-header{height:40px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;justify-content:space-between;flex-shrink:0}
 #filepanel .fp-header h3{font-size:13px;font-weight:600}
 #filepanel .fp-header button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px}
 #filepanel .fp-header button:hover{color:var(--text)}
-#filepanel .fp-toolbar{height:38px;background:#1c2128;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:6px;flex-shrink:0}
-#filepanel .fp-toolbar input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none}
+#filepanel .fp-toolbar{height:38px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
+#filepanel .fp-toolbar input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none;min-width:0}
 #filepanel .fp-toolbar input:focus{border-color:var(--green)}
 #filepanel .fp-toolbar button{background:var(--border);border:none;color:var(--text);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap}
 #filepanel .fp-toolbar button:hover{background:#484f58}
-#filepanel .fp-toolbar button:disabled{opacity:.4;cursor:not-allowed}
 #filepanel .fp-body{flex:1;overflow-y:auto;padding:4px 0}
 .file-item{display:flex;align-items:center;padding:6px 12px;cursor:pointer;transition:.15s;border-left:3px solid transparent}
 .file-item:hover{background:rgba(255,255,255,.05)}
-.file-item.selected{background:rgba(63,185,80,.1);border-left-color:var(--green)}
-.file-item i{width:20px;text-align:center;margin-right:8px;font-size:13px}
-.file-item .fname{flex:1;font-size:12px;word-break:break-all}
-.file-item .fsize{font-size:11px;color:var(--text-dim);margin-left:8px}
-.file-item.dir i{color:var(--blue)}
-.file-item.file i{color:var(--text-dim)}
+.file-item i{width:18px;text-align:center;margin-right:8px;font-size:13px}
+.file-item .fname{flex:1;font-size:12px;word-break:break-all;min-width:0}
+.file-item .fsize{font-size:11px;color:var(--text-dim);margin-left:6px;white-space:nowrap}
+.file-item.dir i{color:var(--blue)}.file-item.file i{color:var(--text-dim)}
 .fp-loading{display:flex;align-items:center;justify-content:center;padding:24px;color:var(--text-dim);gap:8px;font-size:12px}
 
 /* === Modal === */
@@ -107,9 +98,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #modal textarea:focus{border-color:var(--green)}
 #modal .m-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
 #modal .m-footer button{padding:6px 16px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;font-size:12px;transition:.2s}
-#modal .btn-save{background:var(--green);color:#000}
-#modal .btn-save:hover{opacity:.85}
-#modal .btn-save:disabled{opacity:.4;cursor:not-allowed}
+#modal .btn-save{background:var(--green);color:#000}.btn-save:hover{opacity:.85}
 #modal .btn-cancel{background:var(--border);color:var(--text)}
 
 /* === Virtual Keyboard === */
@@ -117,83 +106,73 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #keyboard.show{display:block;animation:slideDown .2s ease-out}
 .kb-row{display:flex;justify-content:center;gap:4px;margin-bottom:4px}
 .kb-key{min-width:32px;height:36px;background:#21262d;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.1s;padding:0 8px;flex-shrink:0}
-.kb-key:active,.kb-key.pressed{background:var(--green);color:#000;border-color:var(--green);transform:scale(.95)}
+.kb-key:active{background:var(--green);color:#000;border-color:var(--green);transform:scale(.95)}
 .kb-key.special{background:#1c2128;color:var(--green);font-weight:600;font-size:11px}
 .kb-key.special.active{background:var(--green);color:#000}
-.kb-key.wide{min-width:56px}
-.kb-key.xwide{min-width:80px}
+.kb-key.wide{min-width:56px}.kb-key.xwide{min-width:80px}
 
-/* === Connection Overlay === */
+/* === Overlay === */
 #connect-overlay{position:absolute;inset:0;background:rgba(13,17,23,.97);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
 #connect-overlay.hidden{opacity:0;pointer-events:none}
-
 #connect-box{text-align:center;padding:32px;max-width:380px;width:90%;animation:fadeInUp .5s ease-out}
 #connect-box .logo{font-size:48px;color:var(--green);margin-bottom:16px}
-#connect-box h2{margin-bottom:4px;color:var(--text);font-size:20px;font-weight:700}
+#connect-box h2{margin-bottom:4px;font-size:20px;font-weight:700}
 #connect-box .subtitle{color:var(--text-dim);font-size:13px;margin-bottom:24px}
-
-#connect-box .form-group{margin-bottom:16px;text-align:left}
-#connect-box label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-#connect-box input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:6px;font-family:inherit;font-size:13px;outline:none;transition:.2s}
-#connect-box input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim)}
-#connect-box input[type=text].shake{animation:shake .4s ease;border-color:var(--red)!important}
-
+.form-group{margin-bottom:16px;text-align:left}
+.form-group label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:6px;font-family:inherit;font-size:13px;outline:none;transition:.2s}
+.form-group input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim)}
+.form-group input[type=text].shake{animation:shake .4s ease;border-color:var(--red)!important}
 .btn-connect{padding:12px 32px;background:var(--green);color:#000;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center}
-.btn-connect:hover{opacity:.9;transform:translateY(-1px)}
-.btn-connect:active{transform:translateY(0)}
+.btn-connect:hover{opacity:.9;transform:translateY(-1px)}.btn-connect:active{transform:translateY(0)}
 .btn-connect:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-connect .spinner-sm{border-color:rgba(0,0,0,.2);border-top-color:#000}
 
-/* Status display in overlay */
 .status-display{text-align:left;margin-top:20px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:12px;display:none}
 .status-display.show{display:block;animation:fadeIn .3s ease-out}
-.status-display .status-row{display:flex;align-items:center;gap:8px;padding:4px 0;color:var(--text-dim)}
-.status-display .status-row i{width:16px;text-align:center;font-size:12px}
-.status-display .status-row.ok i{color:var(--green)}
-.status-display .status-row.fail i{color:var(--red)}
-.status-display .status-row.wait i{color:var(--yellow);animation:pulse 1s infinite}
-.status-display .status-row.active{color:var(--text)}
+.status-row{display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text-dim);transition:color .2s}
+.status-row i{width:16px;text-align:center;font-size:12px}
+.status-row.ok i{color:var(--green)}.status-row.ok{color:var(--text)}
+.status-row.fail i{color:var(--red)}.status-row.fail{color:var(--red)}
+.status-row.wait i{color:var(--yellow);animation:dotPulse 1.2s infinite}.status-row.wait{color:var(--text-dim)}
 
 .reconnect-bar{height:3px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden;display:none}
 .reconnect-bar.show{display:block}
 .reconnect-bar .reconnect-progress{height:100%;background:var(--yellow);border-radius:2px;animation:progressBar 3s linear}
 
-.connect-hint{margin-top:20px;font-size:11px;color:var(--text-dim);line-height:1.6;max-width:320px;margin-left:auto;margin-right:auto}
-.connect-hint a{color:var(--blue);text-decoration:none}
-.connect-hint a:hover{text-decoration:underline}
+.connect-hint{margin-top:20px;font-size:11px;color:var(--text-dim);line-height:1.7;max-width:320px;margin-left:auto;margin-right:auto}
+.connect-hint code{background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px}
+.connect-hint .hint-icon{margin-right:4px}
 
-/* === Responsive === */
 @media(max-width:600px){
   #filepanel{width:100%}
-  .kb-key{min-width:28px;height:34px;font-size:11px}
-  .kb-key.special{font-size:10px}
+  .kb-key{min-width:26px;height:32px;font-size:10px}
+  .kb-key.special{font-size:9px}
   #connect-box{padding:24px 16px}
-  #connect-box h2{font-size:18px}
+  #connect-box h2{font-size:17px}
 }
 </style>
 </head>
 <body>
 
-<!-- Toast Container -->
 <div id="toast-container"></div>
 
 <!-- Status Bar -->
 <div id="statusbar">
   <div class="left">
     <div class="conn-dot" id="connDot"></div>
-    <span class="title"><i class="fas fa-terminal"></i> Termux Remote</span>
+    <span class="title"><i class="fas fa-terminal"></i> Termux</span>
     <span id="statusLabel">Not connected</span>
   </div>
   <div class="right">
-    <button id="btnKb" onclick="toggleKeyboard()" title="Virtual Keyboard"><i class="fas fa-keyboard"></i> Keys</button>
-    <button id="btnFm" onclick="toggleFilePanel()" title="File Manager"><i class="fas fa-folder"></i> Files</button>
-    <button onclick="fitTerminal()" title="Fit Terminal"><i class="fas fa-expand"></i></button>
+    <button id="btnKb" onclick="toggleKeyboard()"><i class="fas fa-keyboard"></i> Keys</button>
+    <button id="btnFm" onclick="toggleFilePanel()"><i class="fas fa-folder"></i> Files</button>
+    <button onclick="fitTerminal()"><i class="fas fa-expand"></i></button>
   </div>
 </div>
 
 <!-- Main -->
 <div id="main">
-  <!-- Terminal -->
   <div id="terminal-wrap">
     <div id="terminal"></div>
 
@@ -209,24 +188,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
           <input type="text" id="tokenInput" placeholder="Enter auth token" value="termux-remote-2024">
         </div>
 
-        <button class="btn-connect" id="btnConnect" onclick="connectTermux()">
-          <i class="fas fa-plug"></i> <span id="btnConnectText">Connect</span>
+        <button class="btn-connect" id="btnConnect" onclick="doConnect()">
+          <i class="fas fa-plug"></i> <span id="btnText">Connect</span>
         </button>
 
-        <!-- Connection Status -->
         <div class="status-display" id="statusDisplay">
-          <div class="status-row" id="rowServer">
-            <i class="fas fa-circle"></i>
-            <span>Server connection</span>
-          </div>
-          <div class="status-row" id="rowAuth">
-            <i class="fas fa-circle"></i>
-            <span>Authentication</span>
-          </div>
-          <div class="status-row" id="rowDevice">
-            <i class="fas fa-circle"></i>
-            <span>Termux device</span>
-          </div>
+          <div class="status-row" id="rowServer"><i class="fas fa-circle"></i><span>Server connection</span></div>
+          <div class="status-row" id="rowAuth"><i class="fas fa-circle"></i><span>Authentication</span></div>
+          <div class="status-row" id="rowDevice"><i class="fas fa-circle"></i><span>Termux device</span></div>
         </div>
 
         <div class="reconnect-bar" id="reconnectBar">
@@ -234,8 +203,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         </div>
 
         <div class="connect-hint" id="connectHint">
-          Token must match <b>AUTH_TOKEN</b> on Railway and Termux client.<br>
-          Make sure Termux client is running: <code>bash ~/start_remote.sh</code>
+          Token must match <b>AUTH_TOKEN</b> env var on Railway.<br>
+          Make sure Termux client is running first:<br>
+          <code>bash ~/start_remote.sh</code>
         </div>
       </div>
     </div>
@@ -244,14 +214,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <!-- File Panel -->
   <div id="filepanel">
     <div class="fp-header">
-      <h3><i class="fas fa-folder-open"></i> File Manager</h3>
+      <h3><i class="fas fa-folder-open"></i> Files</h3>
       <button onclick="toggleFilePanel()"><i class="fas fa-times"></i></button>
     </div>
     <div class="fp-toolbar">
       <input type="text" id="pathInput" value="~" placeholder="Path">
       <button onclick="fileList()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
-      <button onclick="fileFind()"><i class="fas fa-search"></i> Find</button>
-      <button onclick="fileNavigate('..')" title="Up"><i class="fas fa-level-up-alt"></i></button>
+      <button onclick="fileFind()"><i class="fas fa-search"></i></button>
+      <button onclick="fileNavigate('..')"><i class="fas fa-level-up-alt"></i></button>
       <button onclick="showUploadModal()"><i class="fas fa-upload"></i></button>
       <button onclick="showCreateModal()"><i class="fas fa-plus"></i></button>
     </div>
@@ -321,25 +291,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
-<!-- xterm.js -->
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xtermAddonFit.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xtermAddonWebLinks.min.js"></script>
 
 <script>
-// ========== State Machine ==========
-// States: idle -> connecting -> server_ok -> waiting_device -> connected
-//         Any -> error -> reconnecting -> connecting
-const State = {
-  IDLE: 'idle',
-  CONNECTING: 'connecting',
-  SERVER_OK: 'server_ok',
-  WAITING_DEVICE: 'waiting_device',
-  CONNECTED: 'connected',
-  ERROR: 'error',
-  RECONNECTING: 'reconnecting'
-};
-
+/* ================================================
+   STATE
+   ================================================ */
 let ws = null;
 let term = null;
 let fitAddon = null;
@@ -349,337 +308,346 @@ let activeMods = { ctrl: false, alt: false };
 let pendingReq = {};
 let reqCounter = 0;
 let currentFilePath = null;
-let currentState = State.IDLE;
-let reconnectTimer = null;
-let reconnectCount = 0;
-let reconnectMaxDelay = 15000;
-let wsConnected = false;
-let knownDevices = [];
-let connectTimeout = null;
 
-// ========== Toast System ==========
-function toast(msg, type='info', duration=4000) {
-  const container = document.getElementById('toast-container');
-  const icons = { info:'fa-circle-info', success:'fa-circle-check', error:'fa-circle-xmark', warn:'fa-triangle-exclamation' };
+// Connection state
+let wsReady = false;           // ws.readyState === OPEN
+let serverReached = false;      // onopen fired at least once
+let reconnectTimer = null;
+let reconnectAttempt = 0;
+let devicePollTimer = null;    // polls for devices when waiting
+let keepaliveTimer = null;     // client-side ping to keep proxy alive
+let userInitiated = false;     // did user click Connect?
+let intentionalClose = false;  // we closed it ourselves
+
+/* ================================================
+   TOAST
+   ================================================ */
+function toast(msg, type='info', ms=4000) {
+  const c = document.getElementById('toast-container');
+  const icons = {info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warn:'fa-triangle-exclamation'};
   const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i><span class="toast-msg">${msg}</span><span class="toast-close" onclick="this.parentElement.classList.add('out');setTimeout(()=>this.parentElement.remove(),300)">&times;</span>`;
-  container.appendChild(el);
-  if (duration > 0) setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, duration);
+  el.className = 'toast ' + type;
+  el.innerHTML = '<i class="fas '+(icons[type]||icons.info)+'"></i><span class="toast-msg">'+msg+'</span><span class="toast-close" onclick="dismissToast(this.parentElement)">&times;</span>';
+  c.appendChild(el);
+  if (ms > 0) setTimeout(() => dismissToast(el), ms);
   return el;
 }
-
-// ========== UI State Updates ==========
-function setState(newState, detail) {
-  const prev = currentState;
-  currentState = newState;
-  console.log(`[State] ${prev} -> ${newState}`, detail || '');
-
-  const overlay = document.getElementById('connect-overlay');
-  const btn = document.getElementById('btnConnect');
-  const btnText = document.getElementById('btnConnectText');
-  const statusDisp = document.getElementById('statusDisplay');
-  const reconBar = document.getElementById('reconnectBar');
-  const connDot = document.getElementById('connDot');
-  const statusLabel = document.getElementById('statusLabel');
-  const hint = document.getElementById('connectHint');
-
-  // Reset all status rows
-  ['rowServer','rowAuth','rowDevice'].forEach(id => {
-    const row = document.getElementById(id);
-    row.className = 'status-row';
-  });
-
-  switch(newState) {
-    case State.IDLE:
-      connDot.className = 'conn-dot';
-      statusLabel.textContent = 'Not connected';
-      btn.disabled = false;
-      btnText.textContent = 'Connect';
-      btn.querySelector('i').className = 'fas fa-plug';
-      statusDisp.classList.remove('show');
-      reconBar.classList.remove('show');
-      hint.style.display = '';
-      break;
-
-    case State.CONNECTING:
-      connDot.className = 'conn-dot warn';
-      statusLabel.textContent = 'Connecting...';
-      btn.disabled = true;
-      btnText.textContent = 'Connecting...';
-      btn.querySelector('i').className = 'fas fa-circle-notch fa-spin';
-      statusDisp.classList.add('show');
-      reconBar.classList.remove('show');
-      hint.style.display = 'none';
-      setRow('rowServer', 'wait', 'Connecting to server...');
-      setRow('rowAuth', '', 'Waiting...');
-      setRow('rowDevice', '', 'Waiting...');
-      break;
-
-    case State.SERVER_OK:
-      setRow('rowServer', 'ok', 'Server connected');
-      setRow('rowAuth', 'ok', 'Authenticated');
-      setRow('rowDevice', 'wait', 'Waiting for Termux device...');
-      statusLabel.textContent = 'Waiting for device...';
-      btn.disabled = false;
-      btnText.textContent = 'Retry Search';
-      btn.querySelector('i').className = 'fas fa-rotate';
-      break;
-
-    case State.WAITING_DEVICE:
-      connDot.className = 'conn-dot warn';
-      statusLabel.textContent = 'No device found';
-      setRow('rowServer', 'ok', 'Server connected');
-      setRow('rowAuth', 'ok', 'Authenticated');
-      setRow('rowDevice', 'fail', 'No Termux device online');
-      btn.disabled = false;
-      btnText.textContent = 'Retry';
-      btn.querySelector('i').className = 'fas fa-rotate';
-      hint.style.display = '';
-      hint.innerHTML = '<i class="fas fa-mobile-screen-button" style="color:var(--yellow)"></i> No Termux device is connected.<br>Run <code>bash ~/start_remote.sh</code> on your Termux.';
-      toast('No Termux device found. Make sure Termux client is running.', 'warn', 6000);
-      break;
-
-    case State.CONNECTED:
-      connDot.className = 'conn-dot on';
-      statusLabel.textContent = `Device: ${deviceId}`;
-      overlay.classList.add('hidden');
-      btn.disabled = false;
-      btnText.textContent = 'Connected';
-      btn.querySelector('i').className = 'fas fa-check';
-      toast('Termux device connected!', 'success');
-      if (term) {
-        term.writeln('\x1b[32m[✓] Connected to Termux device ' + deviceId + '\x1b[0m');
-        term.writeln('');
-      }
-      break;
-
-    case State.ERROR:
-      connDot.className = 'conn-dot';
-      statusLabel.textContent = 'Error';
-      btn.disabled = false;
-      btnText.textContent = 'Retry';
-      btn.querySelector('i').className = 'fas fa-rotate';
-      if (detail === 'auth') {
-        setRow('rowServer', 'ok', 'Server connected');
-        setRow('rowAuth', 'fail', 'Authentication failed');
-        setRow('rowDevice', '', '---');
-        toast('Authentication failed! Check your token.', 'error', 5000);
-        document.getElementById('tokenInput').classList.add('shake');
-        setTimeout(() => document.getElementById('tokenInput').classList.remove('shake'), 500);
-      } else {
-        setRow('rowServer', 'fail', 'Connection failed');
-        setRow('rowAuth', '', '---');
-        setRow('rowDevice', '', '---');
-        toast('Cannot connect to server. ' + (detail || 'Check your network.'), 'error', 5000);
-      }
-      hint.style.display = '';
-      break;
-
-    case State.RECONNECTING:
-      connDot.className = 'conn-dot warn';
-      const delay = Math.min(3000 * Math.pow(1.5, reconnectCount), reconnectMaxDelay);
-      const secs = Math.ceil(delay / 1000);
-      statusLabel.textContent = `Reconnecting in ${secs}s...`;
-      btn.disabled = true;
-      btnText.textContent = `Reconnecting ${secs}s`;
-      btn.querySelector('i').className = 'fas fa-circle-notch fa-spin';
-      reconBar.classList.add('show');
-      // Re-trigger animation
-      const prog = reconBar.querySelector('.reconnect-progress');
-      prog.style.animation = 'none';
-      prog.offsetHeight; // reflow
-      prog.style.animation = `progressBar ${secs}s linear`;
-      break;
-  }
+function dismissToast(el) {
+  if (!el || !el.parentElement) return;
+  el.classList.add('out');
+  setTimeout(() => el.remove(), 300);
 }
+
+/* ================================================
+   UI HELPERS
+   ================================================ */
+const $ = id => document.getElementById(id);
 
 function setRow(id, status, text) {
-  const row = document.getElementById(id);
-  row.className = 'status-row' + (status ? ' ' + status : '') + (status ? ' active' : '');
-  const icons = { ok: 'fa-circle-check', fail: 'fa-circle-xmark', wait: 'fa-circle-dot' };
-  const icon = status && icons[status] ? icons[status] : 'fa-circle';
-  row.innerHTML = `<i class="fas ${icon}"></i><span>${text}</span>`;
+  const row = $(id);
+ const iconMap = {ok:'fa-circle-check', fail:'fa-circle-xmark', wait:'fa-circle-dot'};
+ const ico = status && iconMap[status] ? iconMap[status] : 'fa-circle';
+ row.className = 'status-row' + (status ? ' ' + status : '');
+ row.innerHTML = '<i class="fas ' + ico + '"></i><span>' + text + '</span>';
 }
 
-// ========== Terminal Init ==========
+function setStatus(label, dotClass) {
+  $('statusLabel').textContent = label;
+  $('connDot').className = 'conn-dot' + (dotClass ? ' ' + dotClass : '');
+}
+
+function setBtn(text, icon, disabled) {
+  $('btnText').textContent = text;
+  $('btnConnect').querySelector('i').className = 'fas ' + icon;
+  $('btnConnect').disabled = !!disabled;
+}
+
+/* ================================================
+   TERMINAL
+   ================================================ */
 function initTerminal() {
   term = new Terminal({
     theme: {
-      background: '#0d1117',
-      foreground: '#e6edf3',
-      cursor: '#3fb950', cursorAccent: '#0d1117',
-      selectionBackground: 'rgba(63,185,80,0.3)',
-      black: '#484f58', red: '#f85149', green: '#3fb950',
-      yellow: '#d29922', blue: '#58a6ff', magenta: '#bc8cff',
-      cyan: '#39c5cf', white: '#e6edf3',
-      brightBlack: '#6e7681', brightRed: '#ff7b72', brightGreen: '#56d364',
-      brightYellow: '#e3b341', brightBlue: '#79c0ff', brightMagenta: '#d2a8ff',
-      brightCyan: '#56d4dd', brightWhite: '#ffffff'
+      background:'#0d1117', foreground:'#e6edf3', cursor:'#3fb950', cursorAccent:'#0d1117',
+      selectionBackground:'rgba(63,185,80,0.3)',
+      black:'#484f58',red:'#f85149',green:'#3fb950',yellow:'#d29922',blue:'#58a6ff',magenta:'#bc8cff',cyan:'#39c5cf',white:'#e6edf3',
+      brightBlack:'#6e7681',brightRed:'#ff7b72',brightGreen:'#56d364',brightYellow:'#e3b341',brightBlue:'#79c0ff',brightMagenta:'#d2a8ff',brightCyan:'#56d4dd',brightWhite:'#ffffff'
     },
-    fontFamily: "'Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace",
-    fontSize: 14, cursorBlink: true, cursorStyle: 'block',
-    scrollback: 5000, allowProposedApi: true, allowTransparency: true
+    fontFamily:"'Fira Code','Cascadia Code','JetBrains Mono',monospace",
+    fontSize:14, cursorBlink:true, cursorStyle:'block', scrollback:5000,
+    allowProposedApi:true, allowTransparency:true
   });
-
   fitAddon = new FitAddon.FitAddon();
   term.loadAddon(fitAddon);
   term.loadAddon(new WebLinksAddon.WebLinksAddon());
-
-  term.open(document.getElementById('terminal'));
+  term.open($('terminal'));
   fitAddon.fit();
 
   term.onData(data => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || !deviceId) return;
-    send({ action: 'input', data, target: deviceId });
+    if (!wsReady || !deviceId) return;
+    wsSend({action:'input', data, target:deviceId});
   });
-
-  term.onResize(({ cols, rows }) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || !deviceId) return;
-    send({ action: 'resize', cols, rows, target: deviceId });
+  term.onResize(({cols, rows}) => {
+    if (!wsReady || !deviceId) return;
+    wsSend({action:'resize', cols, rows, target:deviceId});
   });
 
   window.addEventListener('resize', () => { if (fitAddon) fitAddon.fit(); });
 
-  // Welcome message
-  term.writeln('\x1b[36m  ╔══════════════════════════════════════╗\x1b[0m');
-  term.writeln('\x1b[36m  ║     Termux Remote Controller        ║\x1b[0m');
-  term.writeln('\x1b[36m  ╚══════════════════════════════════════╝\x1b[0m');
-  term.writeln('');
-  term.writeln('\x1b[33m  Waiting for connection...\x1b[0m');
-  term.writeln('');
+  term.writeln('\x1b[36m  Termux Remote Controller\x1b[0m');
+  term.writeln('\x1b[90m  Waiting for connection...\x1b[0m\n');
 }
 
-// ========== WebSocket ==========
-function connectWS() {
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-    ws.close();
-  }
+function fitTerminal() { if (fitAddon) setTimeout(() => fitAddon.fit(), 60); }
 
-  setState(State.CONNECTING);
+/* ================================================
+   WEBSOCKET  —  the critical part
+   ================================================ */
+function openWS() {
+  // Clean up previous
+  closeWS(true);
+  intentionalClose = false;
+
+  // UI: connecting
+  setBtn('Connecting...', 'fa-circle-notch fa-spin', true);
+  setStatus('Connecting...', 'warn');
+  setRow('rowServer', 'wait', 'Connecting to server...');
+  setRow('rowAuth', '', 'Waiting...');
+  setRow('rowDevice', '', 'Waiting...');
+  $('statusDisplay').classList.add('show');
+  $('connectHint').style.display = 'none';
+  $('reconnectBar').classList.remove('show');
 
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${proto}//${location.host}/ws/browser`;
-
-  // Connection timeout (10s)
-  clearTimeout(connectTimeout);
-  connectTimeout = setTimeout(() => {
-    if (currentState === State.CONNECTING) {
-      setState(State.ERROR, 'Timeout connecting to server');
-      scheduleReconnect();
-    }
-  }, 10000);
+  const url = proto + '//' + location.host + '/ws/browser';
 
   try {
-    ws = new WebSocket(wsUrl);
+    ws = new WebSocket(url);
   } catch(e) {
-    setState(State.ERROR, 'Failed to create WebSocket');
-    scheduleReconnect();
+    showOffline('Failed to create WebSocket');
     return;
   }
 
+  // 10s connection timeout
+  const connTimeout = setTimeout(() => {
+    if (!wsReady) {
+      ws.close();
+      showOffline('Connection timed out (10s)');
+    }
+  }, 10000);
+
   ws.onopen = () => {
-    clearTimeout(connectTimeout);
-    wsConnected = true;
-    reconnectCount = 0;
-    setState(State.SERVER_OK);
-    send({ action: 'list_devices' });
+    clearTimeout(connTimeout);
+    wsReady = true;
+    serverReached = true;
+    reconnectAttempt = 0;
+    startKeepalive();
+    startDevicePoll();
+
+    // UI: server OK
+    setRow('rowServer', 'ok', 'Server connected');
+    setRow('rowAuth', 'ok', 'Authenticated');
+    setRow('rowDevice', 'wait', 'Looking for device...');
+    setStatus('Connected to server', 'warn');
+    setBtn('Connected', 'fa-check', false);
+
+    // Ask for device list
+    wsSend({action:'list_devices'});
   };
 
   ws.onmessage = e => {
-    try { handleMsg(JSON.parse(e.data)); } catch(err) {
-      console.error('Parse error:', err);
-    }
+    try { handleMsg(JSON.parse(e.data)); } catch(err) { console.error('msg parse:', err); }
   };
 
-  ws.onclose = (e) => {
-    clearTimeout(connectTimeout);
-    wsConnected = false;
-    const wasConnected = deviceId !== null;
-    deviceId = null;
+  ws.onclose = e => {
+    clearTimeout(connTimeout);
+    const wasReady = wsReady;
+    wsReady = false;
+    stopKeepalive();
 
-    if (e.code === 4001 || e.code === 4003) {
-      // Auth error from server
-      setState(State.ERROR, 'auth');
-    } else if (wasConnected) {
-      toast('Connection lost! Reconnecting...', 'error', 3000);
-      if (term) term.writeln('\r\n\x1b[31m[!] Connection lost. Reconnecting...\x1b[0m\r\n');
+    // If we intentionally closed, do nothing
+    if (intentionalClose) return;
+
+    // If we never reached onopen, it's a real connection failure
+    if (!serverReached) {
+      showOffline('Cannot reach server');
       scheduleReconnect();
-    } else if (currentState === State.CONNECTING || currentState === State.SERVER_OK) {
-      setState(State.ERROR, `Server closed connection (code: ${e.code})`);
-      scheduleReconnect();
-    } else {
-      scheduleReconnect();
+      return;
     }
+
+    // We had a connection before. Code 1000/1001 = normal close (proxy, idle, etc)
+    // Just reconnect silently unless we had an active device
+    const normalClose = (e.code === 1000 || e.code === 1001 || e.code === 1005);
+
+    if (deviceId) {
+      // We had an active session — that's a real problem
+      deviceId = null;
+      setStatus('Reconnecting...', 'warn');
+      toast('Device connection lost. Reconnecting...', 'warn', 3000);
+      if (term) term.writeln('\r\n\x1b[33m[!] Connection lost. Reconnecting...\x1b[0m');
+      $('connect-overlay').classList.remove('hidden');
+      setRow('rowDevice', 'wait', 'Reconnecting...');
+    } else if (!normalClose && e.code >= 4000) {
+      // Server sent an error code
+      if (e.code === 4003) {
+        showOffline('Authentication failed');
+        $('tokenInput').classList.add('shake');
+        setTimeout(() => $('tokenInput').classList.remove('shake'), 500);
+      } else {
+        showOffline('Server error (code ' + e.code + ')');
+      }
+    } else {
+      // Normal transient close (1000/1001) or unknown — just reconnect silently
+      console.log('WS closed: code=' + e.code + ' reason=' + e.reason + ', reconnecting silently');
+      setStatus('Reconnecting...', 'warn');
+      setRow('rowServer', 'wait', 'Reconnecting...');
+      setRow('rowAuth', '', '---');
+      setRow('rowDevice', '', '---');
+    }
+
+    scheduleReconnect();
   };
 
   ws.onerror = () => {
-    clearTimeout(connectTimeout);
-    // onclose will fire after this, handle there
+    // onclose always fires after onerror, handle there
   };
 }
 
+function closeWS(silent) {
+  intentionalClose = true;
+  stopKeepalive();
+  stopDevicePoll();
+  if (ws) {
+    try { ws.close(); } catch(e) {}
+    ws = null;
+  }
+  wsReady = false;
+}
+
+function wsSend(data) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  data.token = authToken;
+  ws.send(JSON.stringify(data));
+}
+
+/* ================================================
+   KEEPALIVE  —  prevent Railway proxy from closing idle WS
+   ================================================ */
+function startKeepalive() {
+  stopKeepalive();
+  keepaliveTimer = setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      wsSend({action:'ping'});  // server ignores unknown actions
+    }
+  }, 15000); // every 15s
+}
+function stopKeepalive() { clearInterval(keepaliveTimer); keepaliveTimer = null; }
+
+/* ================================================
+   DEVICE POLLING  —  keep asking for devices while waiting
+   ================================================ */
+function startDevicePoll() {
+  stopDevicePoll();
+  devicePollTimer = setInterval(() => {
+    if (wsReady && !deviceId) {
+      wsSend({action:'list_devices'});
+    }
+  }, 4000); // every 4s
+}
+function stopDevicePoll() { clearInterval(devicePollTimer); devicePollTimer = null; }
+
+/* ================================================
+   RECONNECT
+   ================================================ */
 function scheduleReconnect() {
-  if (currentState === State.IDLE) return; // User hasn't tried to connect
+  stopKeepalive();
+  stopDevicePoll();
+  if (!userInitiated && !serverReached) return; // don't auto-reconnect if user never tried
 
-  reconnectCount++;
-  const delay = Math.min(3000 * Math.pow(1.5, reconnectCount - 1), reconnectMaxDelay);
+  reconnectAttempt++;
+  const delay = Math.min(2000 + reconnectAttempt * 1000, 10000);
+  const secs = Math.ceil(delay / 1000);
 
-  setState(State.RECONNECTING);
+  setStatus('Reconnect in ' + secs + 's', 'warn');
+  setBtn('Reconnect ' + secs + 's', 'fa-circle-notch fa-spin', true);
+
+  const bar = $('reconnectBar');
+  bar.classList.add('show');
+  const prog = bar.querySelector('.reconnect-progress');
+  prog.style.animation = 'none';
+  prog.offsetHeight;
+  prog.style.animation = 'progressBar ' + secs + 's linear';
 
   clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
-    if (currentState === State.RECONNECTING) {
-      connectWS();
-    }
+    bar.classList.remove('show');
+    openWS();
   }, delay);
 }
 
+/* ================================================
+   SHOW OFFLINE / WAITING  —  update overlay for errors
+   ================================================ */
+function showOffline(reason) {
+  setRow('rowServer', 'fail', reason || 'Connection failed');
+  setRow('rowAuth', '', '---');
+  setRow('rowDevice', '', '---');
+  setStatus('Offline', '');
+  setBtn('Retry', 'fa-rotate', false);
+  toast(reason || 'Connection failed', 'error', 5000);
+}
+
+function showWaiting() {
+  setRow('rowServer', 'ok', 'Server connected');
+  setRow('rowAuth', 'ok', 'Authenticated');
+  setRow('rowDevice', 'fail', 'No Termux device online');
+  setStatus('No device', 'warn');
+  setBtn('Searching...', 'fa-magnifying-glass fa-spin', false);
+  $('connectHint').innerHTML = '<i class="fas fa-mobile-screen-button hint-icon" style="color:var(--yellow)"></i> '
+    + 'No Termux device detected.<br>'
+    + 'Run on your Termux: <code>bash ~/start_remote.sh</code><br>'
+    + 'This page will auto-detect when a device connects.';
+  $('connectHint').style.display = '';
+}
+
+/* ================================================
+   MESSAGE HANDLER
+   ================================================ */
 function handleMsg(msg) {
   switch(msg.type) {
     case 'init':
-      // Browser client registered
+      // browser got its ID, nothing to do
       break;
 
     case 'devices':
-      knownDevices = msg.devices || [];
-      if (knownDevices.length > 0 && !deviceId) {
-        selectDevice(knownDevices[0].id, knownDevices[0].info);
-      } else if (knownDevices.length === 0 && !deviceId) {
-        if (currentState === State.SERVER_OK) {
-          setState(State.WAITING_DEVICE);
-        }
-      }
+      handleDevices(msg.devices || []);
       break;
 
     case 'device_connected':
       if (!deviceId) {
-        selectDevice(msg.device.id, msg.device.info);
+        pickDevice(msg.device);
       } else {
-        // Another device connected
-        toast(`New device: ${msg.device.info}`, 'info', 3000);
+        toast('New device: ' + (msg.device.info || msg.device.id), 'info', 3000);
       }
-      knownDevices.push(msg.device);
       break;
 
     case 'device_disconnected':
       if (msg.device_id === deviceId) {
         deviceId = null;
-        setState(State.WAITING_DEVICE);
-        document.getElementById('connect-overlay').classList.remove('hidden');
+        stopDevicePoll();
+        startDevicePoll();
+        showWaiting();
+        $('connect-overlay').classList.remove('hidden');
         if (term) {
           term.writeln('\r\n\x1b[33m[!] Device disconnected.\x1b[0m');
-          term.writeln('\x1b[33m    Waiting for device to reconnect...\x1b[0m\r\n');
+          term.writeln('\x1b[90m  Waiting for device...\x1b[0m\r\n');
         }
-        toast('Termux device disconnected', 'warn', 5000);
+        toast('Device disconnected', 'warn', 5000);
       }
-      knownDevices = knownDevices.filter(d => d.id !== msg.device_id);
       break;
 
     case 'output':
-      if (msg.source === deviceId && term) {
-        term.write(msg.data);
-      }
+      if (msg.source === deviceId && term) term.write(msg.data);
       break;
 
     case 'result':
@@ -691,65 +659,78 @@ function handleMsg(msg) {
       break;
 
     case 'error':
-      if (msg.msg && msg.msg.includes('Unauthorized') || msg.msg && msg.msg.includes('token')) {
-        setState(State.ERROR, 'auth');
-      } else {
-        toast(msg.msg || 'Unknown error', 'error', 4000);
+      if (msg.msg && (msg.msg.includes('Unauthorized') || msg.msg.includes('token'))) {
+        toast('Wrong auth token!', 'error', 5000);
       }
       break;
   }
 }
 
-function selectDevice(id, info) {
-  deviceId = id;
-  knownDevices = knownDevices.filter(d => d.id !== id);
-  setState(State.CONNECTED);
+function handleDevices(devices) {
+  if (deviceId) return; // already connected
 
-  // Send initial resize after overlay fades
+  if (devices.length > 0) {
+    pickDevice(devices[0]);
+  } else if (serverReached) {
+    // Server is up but no device — show waiting state
+    // Only show toast once (first time)
+    if (reconnectAttempt === 0 && !$('connect-overlay').classList.contains('hidden') === false) {
+      // overlay is visible, just update it silently
+    }
+    showWaiting();
+  }
+}
+
+function pickDevice(device) {
+  deviceId = device.id;
+  stopDevicePoll();
+
+  setRow('rowDevice', 'ok', 'Device: ' + (device.info || device.id));
+  setStatus('Device: ' + deviceId, 'on');
+  setBtn('Connected', 'fa-check', false);
+  $('connect-overlay').classList.add('hidden');
+  toast('Connected to ' + (device.info || device.id), 'success');
+
+  if (term) {
+    term.writeln('\x1b[32m[OK] Connected to device: ' + (device.info || device.id) + '\x1b[0m\n');
+  }
+
+  // Send terminal size after overlay fades
   setTimeout(() => {
     if (term && fitAddon) {
       fitAddon.fit();
-      send({ action: 'resize', cols: term.cols, rows: term.rows, target: deviceId });
+      wsSend({action:'resize', cols:term.cols, rows:term.rows, target:deviceId});
     }
   }, 400);
 }
 
-function send(data) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    data.token = authToken;
-    ws.send(JSON.stringify(data));
-  }
-}
-
-// ========== Connect Button ==========
-function connectTermux() {
-  const tokenInput = document.getElementById('tokenInput');
-  authToken = tokenInput.value.trim();
-
-  if (!authToken) {
-    tokenInput.classList.add('shake');
-    setTimeout(() => tokenInput.classList.remove('shake'), 500);
-    toast('Please enter an auth token', 'warn');
+/* ================================================
+   CONNECT BUTTON
+   ================================================ */
+function doConnect() {
+  const val = $('tokenInput').value.trim();
+  if (!val) {
+    $('tokenInput').classList.add('shake');
+    setTimeout(() => $('tokenInput').classList.remove('shake'), 500);
+    toast('Enter an auth token', 'warn');
     return;
   }
-
-  // Clear reconnect state
+  authToken = val;
+  userInitiated = true;
+  serverReached = false;
+  reconnectAttempt = 0;
   clearTimeout(reconnectTimer);
-  reconnectCount = 0;
-  deviceId = null;
-
-  // Show overlay
-  document.getElementById('connect-overlay').classList.remove('hidden');
-
-  connectWS();
+  openWS();
 }
 
-// ========== Virtual Keyboard ==========
+/* ================================================
+   VIRTUAL KEYBOARD
+   ================================================ */
 function toggleKeyboard() {
-  const kb = document.getElementById('keyboard');
+  const kb = $('keyboard');
   kb.classList.toggle('show');
-  document.getElementById('btnKb').classList.toggle('active');
-  if (kb.classList.contains('show')) setTimeout(() => fitTerminal(), 100);
+  $('btnKb').classList.toggle('active');
+  if (kb.classList.contains('show')) setTimeout(fitTerminal, 100);
 }
 
 function toggleMod(mod, el) {
@@ -758,118 +739,89 @@ function toggleMod(mod, el) {
 }
 
 function sendKey(key) {
-  if (!ws || ws.readyState !== WebSocket.OPEN || !deviceId) {
-    toast('No device connected', 'warn', 2000);
-    return;
-  }
+  if (!wsReady || !deviceId) { toast('No device connected', 'warn', 2000); return; }
 
-  const mod = {};
-  if (activeMods.ctrl) mod.ctrlKey = true;
-  if (activeMods.alt) mod.altKey = true;
-
-  activeMods.ctrl = false;
-  activeMods.alt = false;
-  document.querySelectorAll('.kb-key.special[data-mod]').forEach(el => el.classList.remove('active'));
+  const ctrl = activeMods.ctrl, alt = activeMods.alt;
+  activeMods.ctrl = false; activeMods.alt = false;
+  document.querySelectorAll('.kb-key[data-mod]').forEach(e => e.classList.remove('active'));
 
   let seq = '';
-  if (mod.ctrlKey || mod.altKey) {
-    const keyMap = {
-      'a':'\x01','b':'\x02','c':'\x03','d':'\x04','e':'\x05','f':'\x06',
-      'g':'\x07','h':'\x08','i':'\x09','j':'\x0a','k':'\x0b','l':'\x0c',
-      'm':'\x0d','n':'\x0e','o':'\x0f','p':'\x10','q':'\x11','r':'\x12',
-      's':'\x13','t':'\x14','u':'\x15','v':'\x16','w':'\x17','x':'\x18',
-      'y':'\x19','z':'\x1a','[':'\x1b',']':'\x1d','\\':'\x1c','/':'\x1f',
-      ' ':'\x00','_':'\x1f'
-    };
-    const baseKey = key.length === 1 ? key.toLowerCase() : null;
-    if (mod.ctrlKey && baseKey && keyMap[baseKey]) {
-      seq = keyMap[baseKey];
-    } else if (key.startsWith('F') && key.length <= 3) {
-      const fnum = parseInt(key.slice(1));
-      seq = fnum <= 10 ? `\x1bO${fnum === 10 ? '0' : String(fnum-1+48)}` : `\x1b[${fnum-10+33}~`;
-    } else {
-      seq = key;
-    }
+  if (ctrl || alt) {
+    const map = {a:'\x01',b:'\x02',c:'\x03',d:'\x04',e:'\x05',f:'\x06',g:'\x07',h:'\x08',i:'\x09',j:'\x0a',k:'\x0b',l:'\x0c',m:'\x0d',n:'\x0e',o:'\x0f',p:'\x10',q:'\x11',r:'\x12',s:'\x13',t:'\x14',u:'\x15',v:'\x16',w:'\x17',x:'\x18',y:'\x19',z:'\x1a','[':'\x1b',']':'\x1d', '\\':'\x1c','/':'\x1f',' ':'\x00','_':'\x1f'};
+    const k = key.length===1 ? key.toLowerCase() : null;
+    if (ctrl && k && map[k]) seq = map[k];
+    else seq = key;
   } else {
-    const keySeqs = {
-      'Escape':'\x1b','Tab':'\t','Backspace':'\x7f','Delete':'\x1b[3~',
-      'Home':'\x1b[H','End':'\x1b[F','PageUp':'\x1b[5~','PageDown':'\x1b[6~',
-      'Insert':'\x1b[2~','Enter':'\r',
-      'ArrowUp':'\x1b[A','ArrowDown':'\x1b[B','ArrowLeft':'\x1b[D','ArrowRight':'\x1b[C',
-      'F1':'\x1bOP','F2':'\x1bOQ','F3':'\x1bOR','F4':'\x1bOS',
-      'F5':'\x1b[15~','F6':'\x1b[17~','F7':'\x1b[18~','F8':'\x1b[19~',
-      'F9':'\x1b[20~','F10':'\x1b[21~','F11':'\x1b[23~','F12':'\x1b[24~'
-    };
-    seq = keySeqs[key] || key;
+    const seqs = {Escape:'\x1b',Tab:'\t',Backspace:'\x7f',Delete:'\x1b[3~',Home:'\x1b[H',End:'\x1b[F',PageUp:'\x1b[5~',PageDown:'\x1b[6~',Insert:'\x1b[2~',Enter:'\r',ArrowUp:'\x1b[A',ArrowDown:'\x1b[B',ArrowLeft:'\x1b[D',ArrowRight:'\x1b[C',F1:'\x1bOP',F2:'\x1bOQ',F3:'\x1bOR',F4:'\x1bOS',F5:'\x1b[15~',F6:'\x1b[17~',F7:'\x1b[18~',F8:'\x1b[19~',F9:'\x1b[20~',F10:'\x1b[21~',F11:'\x1b[23~',F12:'\x1b[24~'};
+    seq = seqs[key] || key;
   }
-  send({ action: 'input', data: seq, target: deviceId });
+  wsSend({action:'input', data:seq, target:deviceId});
 }
 
-// ========== File Manager ==========
+/* ================================================
+   FILE MANAGER
+   ================================================ */
 function toggleFilePanel() {
-  const fp = document.getElementById('filepanel');
+  if (!deviceId) { toast('No device connected', 'warn'); return; }
+  const fp = $('filepanel');
   fp.classList.toggle('open');
-  document.getElementById('btnFm').classList.toggle('active');
+  $('btnFm').classList.toggle('active');
   if (fp.classList.contains('open')) fileList();
 }
 
 function fileList(path) {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
-  if (path === undefined) path = document.getElementById('pathInput').value;
-  document.getElementById('pathInput').value = path;
-  const reqId = 'req_' + (++reqCounter);
-  pendingReq[reqId] = { type: 'list' };
-  document.getElementById('fileList').innerHTML = '<div class="fp-loading"><div class="spinner spinner-sm"></div> Loading...</div>';
-  send({ action: 'file_req', path, mode: 'list', req_id: reqId, target: deviceId });
+  if (!deviceId) { toast('No device', 'warn'); return; }
+  if (path === undefined) path = $('pathInput').value;
+  $('pathInput').value = path;
+  const id = 'r' + (++reqCounter);
+  pendingReq[id] = {type:'list'};
+  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Loading...</div>';
+  wsSend({action:'file_req', path, mode:'list', req_id:id, target:deviceId});
 }
 
 function fileFind() {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
-  const path = document.getElementById('pathInput').value;
-  const query = prompt('Find files matching (glob):', '*');
-  if (!query) return;
-  const reqId = 'req_' + (++reqCounter);
-  pendingReq[reqId] = { type: 'find' };
-  document.getElementById('fileList').innerHTML = '<div class="fp-loading"><div class="spinner spinner-sm"></div> Searching...</div>';
-  send({ action: 'file_req', path, mode: 'find', query, req_id: reqId, target: deviceId });
+  if (!deviceId) { toast('No device', 'warn'); return; }
+  const path = $('pathInput').value;
+  const q = prompt('Find files (glob):', '*');
+  if (!q) return;
+  const id = 'r' + (++reqCounter);
+  pendingReq[id] = {type:'find'};
+  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Searching...</div>';
+  wsSend({action:'file_req', path, mode:'find', query:q, req_id:id, target:deviceId});
 }
 
 function fileRead(path) {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
-  const reqId = 'req_' + (++reqCounter);
-  pendingReq[reqId] = { type: 'read', path };
-  document.getElementById('fileList').innerHTML = '<div class="fp-loading"><div class="spinner spinner-sm"></div> Reading file...</div>';
-  send({ action: 'file_req', path, mode: 'read', req_id: reqId, target: deviceId });
+  if (!deviceId) { toast('No device', 'warn'); return; }
+  const id = 'r' + (++reqCounter);
+  pendingReq[id] = {type:'read', path};
+  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Reading...</div>';
+  wsSend({action:'file_req', path, mode:'read', req_id:id, target:deviceId});
 }
 
-function fileNavigate(path) {
-  fileList(path);
-}
+function fileNavigate(path) { fileList(path); }
 
 function handleResult(msg) {
   const req = pendingReq[msg.req_id];
   if (!req) return;
   delete pendingReq[msg.req_id];
-
-  const data = msg.data;
-  if (data.success === false) {
-    document.getElementById('fileList').innerHTML = `<div style="padding:16px;color:var(--red);text-align:center;font-size:12px"><i class="fas fa-circle-xmark"></i> ${escapeHtml(data.error || 'Unknown error')}</div>`;
-    toast(data.error || 'Operation failed', 'error');
+  const d = msg.data;
+  if (d.success === false) {
+    $('fileList').innerHTML = '<div style="padding:16px;color:var(--red);text-align:center;font-size:12px"><i class="fas fa-circle-xmark"></i> ' + escHtml(d.error||'Error') + '</div>';
+    toast(d.error||'Error', 'error');
     return;
   }
-
   if (req.type === 'list' || req.type === 'find') {
-    renderFileList(data.entries || [], data.path || '');
+    renderFiles(d.entries||[], d.path||'');
   } else if (req.type === 'read') {
-    document.getElementById('fileList').innerHTML = '';
+    $('fileList').innerHTML = '';
     currentFilePath = req.path;
-    document.getElementById('modalTitle').textContent = 'Edit: ' + req.path;
-    document.getElementById('modalTextarea').value = data.content || '';
-    document.getElementById('modalSaveBtn').onclick = () => fileSave(currentFilePath);
-    document.getElementById('modal-overlay').classList.add('show');
+    $('modalTitle').textContent = 'Edit: ' + req.path;
+    $('modalTextarea').value = d.content || '';
+    $('modalSaveBtn').onclick = () => fileSave(currentFilePath);
+    $('modal-overlay').classList.add('show');
   } else if (req.type === 'upload') {
-    toast(data.message || 'File saved', 'success');
- setTimeout(fileList, 300);
+    toast(d.message || 'Saved', 'success');
+    setTimeout(fileList, 300);
   }
 }
 
@@ -877,149 +829,111 @@ function handleFileData(msg) {
   const req = pendingReq[msg.req_id];
   if (!req) return;
   delete pendingReq[msg.req_id];
-  const data = msg.data;
-  const blob = new Blob([data.content], { type: 'application/octet-stream' });
+  const d = msg.data;
+  const blob = new Blob([d.content], {type:'application/octet-stream'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = data.filename || 'download';
+  a.download = d.filename || 'download';
   a.click();
   URL.revokeObjectURL(a.href);
-  toast(`Downloaded: ${data.filename}`, 'success');
+  toast('Downloaded: ' + (d.filename||'file'), 'success');
 }
 
-function renderFileList(entries, path) {
-  const el = document.getElementById('fileList');
-  if (!entries || entries.length === 0) {
-    el.innerHTML = '<div style="padding:16px;color:var(--text-dim);text-align:center"><i class="fas fa-folder-open" style="font-size:24px;opacity:.3;display:block;margin-bottom:8px"></i>Empty directory</div>';
+function renderFiles(entries, path) {
+  const el = $('fileList');
+  if (!entries.length) {
+    el.innerHTML = '<div style="padding:16px;color:var(--text-dim);text-align:center"><i class="fas fa-folder-open" style="font-size:24px;opacity:.3;display:block;margin-bottom:8px"></i>Empty</div>';
     return;
   }
   el.innerHTML = entries.map(f => {
-    const icon = f.type === 'dir' ? 'fa-folder' : getFileIcon(f.name);
-    const size = f.type === 'file' ? formatSize(f.size) : '';
-    const escaped = escapePath(path + '/' + f.name);
-    const onclick = f.type === 'dir' ? `fileNavigate('${escaped}')` : `fileRead('${escaped}')`;
-    return `<div class="file-item ${f.type}" onclick="${onclick}">
-      <i class="fas ${icon}"></i>
-      <span class="fname">${escapeHtml(f.name)}</span>
-      <span class="fsize">${size}</span>
-    </div>`;
+    const ico = f.type==='dir' ? 'fa-folder' : fileIcon(f.name);
+    const sz = f.type==='file' ? fmtSize(f.size) : '';
+    const p = escPath(path+'/'+f.name);
+    const oc = f.type==='dir' ? "fileNavigate('"+p+"')" : "fileRead('"+p+"')";
+    return '<div class="file-item '+f.type+'" onclick="'+oc+'"><i class="fas '+ico+'"></i><span class="fname">'+escHtml(f.name)+'</span><span class="fsize">'+sz+'</span></div>';
   }).join('');
 }
 
 function showUploadModal() {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    toast(`Uploading ${file.name}...`, 'info', 2000);
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const path = document.getElementById('pathInput').value + '/' + file.name;
-      const reqId = 'req_' + (++reqCounter);
-      pendingReq[reqId] = { type: 'upload' };
-      send({ action: 'file_upload', path, content: ev.target.result, req_id: reqId, target: deviceId });
+  if (!deviceId) { toast('No device', 'warn'); return; }
+  const inp = document.createElement('input'); inp.type='file';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    toast('Uploading ' + f.name + '...', 'info', 2000);
+    const r = new FileReader();
+    r.onload = ev => {
+      const id = 'r' + (++reqCounter);
+      pendingReq[id] = {type:'upload'};
+      wsSend({action:'file_upload', path:$('pathInput').value+'/'+f.name, content:ev.target.result, req_id:id, target:deviceId});
     };
-    reader.readAsText(file);
+    r.readAsText(f);
   };
-  input.click();
+  inp.click();
 }
 
 function showCreateModal() {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
+  if (!deviceId) { toast('No device', 'warn'); return; }
   currentFilePath = null;
-  document.getElementById('modalTitle').textContent = 'Create File';
-  document.getElementById('modalTextarea').value = '';
-  document.getElementById('modalSaveBtn').onclick = createFile;
-  document.getElementById('modal-overlay').classList.add('show');
+  $('modalTitle').textContent = 'Create File';
+  $('modalTextarea').value = '';
+  $('modalSaveBtn').onclick = createFile;
+  $('modal-overlay').classList.add('show');
 }
 
 function createFile() {
-  const name = prompt('File name:');
-  if (!name) return;
-  const path = document.getElementById('pathInput').value + '/' + name;
-  const content = document.getElementById('modalTextarea').value;
-  const reqId = 'req_' + (++reqCounter);
-  pendingReq[reqId] = { type: 'upload' };
-  toast('Creating file...', 'info', 2000);
-  send({ action: 'file_upload', path, content, req_id: reqId, target: deviceId });
+  const name = prompt('File name:'); if (!name) return;
+  const path = $('pathInput').value + '/' + name;
+  const content = $('modalTextarea').value;
+  const id = 'r' + (++reqCounter);
+  pendingReq[id] = {type:'upload'};
+  wsSend({action:'file_upload', path, content, req_id:id, target:deviceId});
+  toast('Creating...', 'info', 1500);
   closeModal();
 }
 
 function fileSave(path) {
-  const content = document.getElementById('modalTextarea').value;
-  const reqId = 'req_' + (++reqCounter);
-  pendingReq[reqId] = { type: 'upload' };
-  toast('Saving file...', 'info', 2000);
-  send({ action: 'file_upload', path, content, req_id: reqId, target: deviceId });
+  const id = 'r' + (++reqCounter);
+  pendingReq[id] = {type:'upload'};
+  wsSend({action:'file_upload', path, content:$('modalTextarea').value, req_id:id, target:deviceId});
+  toast('Saving...', 'info', 1500);
   closeModal();
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('show');
-}
+function closeModal() { $('modal-overlay').classList.remove('show'); }
 
-function fitTerminal() {
-  if (fitAddon) setTimeout(() => fitAddon.fit(), 50);
+/* ================================================
+   HELPERS
+   ================================================ */
+function fileIcon(n) {
+  const ext = n.split('.').pop().toLowerCase();
+  const m = {py:'fa-file-code',js:'fa-file-code',html:'fa-file-code',css:'fa-file-code',json:'fa-file-code',sh:'fa-file-code',ts:'fa-file-code',txt:'fa-file-lines',md:'fa-file-lines',log:'fa-file-lines',jpg:'fa-file-image',png:'fa-file-image',gif:'fa-file-image',svg:'fa-file-image',zip:'fa-file-zipper',tar:'fa-file-zipper',gz:'fa-file-zipper',mp3:'fa-file-audio',mp4:'fa-file-video',pdf:'fa-file-pdf'};
+  return m[ext] || 'fa-file';
 }
+function fmtSize(b) { return b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
+function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escPath(p) { return p.replace(/'/g, "\\'"); }
 
-// ========== Helpers ==========
-function getFileIcon(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const icons = {
-    py:'fa-file-code',js:'fa-file-code',html:'fa-file-code',css:'fa-file-code',
-    json:'fa-file-code',sh:'fa-file-code',ts:'fa-file-code',
-    txt:'fa-file-lines',md:'fa-file-lines',log:'fa-file-lines',
-    jpg:'fa-file-image',png:'fa-file-image',gif:'fa-file-image',svg:'fa-file-image',
-    zip:'fa-file-zipper',tar:'fa-file-zipper',gz:'fa-file-zipper',
-    mp3:'fa-file-audio',mp4:'fa-file-video',apk:'fa-file',
-    pdf:'fa-file-pdf',doc:'fa-file-word',xls:'fa-file-excel'
-  };
-  return icons[ext] || 'fa-file';
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/1048576).toFixed(1) + ' MB';
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-function escapePath(p) {
-  return p.replace(/'/g, "\\'");
-}
-
-// ========== Init ==========
+/* ================================================
+   INIT
+   ================================================ */
 window.addEventListener('DOMContentLoaded', () => {
   initTerminal();
 
-  // Check URL params for token
-  const urlParams = new URLSearchParams(location.search);
-  if (urlParams.get('token')) {
-    authToken = urlParams.get('token');
-    document.getElementById('tokenInput').value = authToken;
+  const params = new URLSearchParams(location.search);
+  if (params.get('token')) {
+    authToken = params.get('token');
+    $('tokenInput').value = authToken;
   }
 
-  // Enter key on token input
-  document.getElementById('tokenInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') connectTermux();
-  });
+  $('tokenInput').addEventListener('keydown', e => { if (e.key==='Enter') doConnect(); });
 
-  // Visibility change - reconnect if needed
+  // Tab visibility: reconnect if ws dropped while tab was hidden
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !wsConnected && currentState !== State.IDLE) {
+    if (!document.hidden && !wsReady && userInitiated) {
       clearTimeout(reconnectTimer);
-      connectWS();
+      openWS();
     }
   });
-
-  setState(State.IDLE);
 });
 </script>
 </body>
