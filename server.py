@@ -1,299 +1,140 @@
 #!/usr/bin/env python3
-"""
-Termux Remote Controller - Railway Server
-WebSocket relay + HTML frontend server
-Port: 2010
-"""
-
-import os
-import json
-import asyncio
-import uuid
-import time
+"""Termux Remote - Railway Server (Ultra-stable)"""
+import os, sys, json, time, asyncio, uuid, traceback
 from aiohttp import web
-from aiohttp import WSMsgType
 
-# --- Config ---
+# Railway sets PORT automatically. Don't hardcode.
 PORT = int(os.environ.get("PORT", 2010))
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN", "termux-remote-2024")
-MAX_MSG_SIZE = 4 * 1024 * 1024  # 4MB
-HEARTBEAT = 25  # seconds - ping to keep Railway proxy alive
 
-# --- Store ---
-browser_sockets = {}   # client_id -> WebSocket
-termux_sockets = {}   # client_id -> WebSocket
-client_meta = {}       # client_id -> dict
+# In-memory stores
+_browsers = {}  # id -> ws
+_termux = {}    # id -> ws
+_meta = {}      # id -> info dict
 
+log = lambda m: print(f"[{time.strftime('%H:%M:%S')}] {m}", flush=True)
 
-def log(msg):
-    ts = time.strftime('%H:%M:%S')
-    print(f"[{ts}] {msg}", flush=True)
+# ---------- Routes ----------
+async def index(req):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
+    return web.FileResponse(path)
 
+async def health(req):
+    n = len([w for w in _termux.values() if not w.closed])
+    return web.json_response({"status": "ok", "port": PORT, "devices": n, "auth_set": bool(AUTH_TOKEN)})
 
-async def index(request):
-    return web.FileResponse(os.path.join(os.path.dirname(__file__), "public", "index.html"))
+async def ws_browser(req):
+    ws = web.WebSocketResponse()
+    await ws.prepare(req)
+    cid = str(uuid.uuid4())[:8]
+    _browsers[cid] = ws
+    log(f"Browser {cid} open")
 
-
-async def ws_browser(request):
-    """WebSocket for browser clients."""
-    ws = web.WebSocketResponse(max_msg_size=MAX_MSG_SIZE, heartbeat=HEARTBEAT)
-    try:
-        await ws.prepare(request)
-    except Exception as e:
-        log(f"Browser WS prepare failed: {e}")
-        return ws
-
-    client_id = str(uuid.uuid4())[:8]
-    browser_sockets[client_id] = ws
-    client_meta[client_id] = {"type": "browser", "connected_at": time.time()}
-    log(f"Browser +{client_id} connected (total: {len(browser_sockets)})")
-
-    # Send client ID immediately
-    try:
-        await ws.send_json({"type": "init", "client_id": client_id})
-    except Exception as e:
-        log(f"Browser {client_id} send init failed: {e}")
-        _cleanup_browser(client_id)
-        return ws
-
-    # Notify about already-connected Termux devices
-    await _send_device_list(ws)
+    # send id
+    await ws.send(json.dumps({"type": "init", "client_id": cid}))
+    # send existing devices
+    devs = [{"id": t, "info": _meta.get(t, {}).get("device_info", "?")} for t, w in list(_termux.items()) if not w.closed]
+    await ws.send(json.dumps({"type": "devices", "devices": devs}))
 
     try:
-        async for msg in ws:
-            if msg.type == WSMsgType.TEXT:
+        async for raw in ws:
+            if raw.type == 1:  # TEXT
                 try:
-                    data = json.loads(msg.data)
-                except json.JSONDecodeError:
+                    data = json.loads(raw.data)
+                except:
                     continue
+                act = data.get("action")
+                tgt = data.get("target")
 
-                action = data.get("action")
-                target = data.get("target")
+                if act == "list_devices":
+                    devs = [{"id": t, "info": _meta.get(t, {}).get("device_info", "?")} for t, w in list(_termux.items()) if not w.closed]
+                    await ws.send(json.dumps({"type": "devices", "devices": devs}))
 
-                # Auth check for sensitive actions
-                if action in ("resize", "file_req", "file_upload", "file_download"):
-                    if data.get("token") != AUTH_TOKEN:
-                        try:
-                            await ws.send_json({"type": "error", "msg": "Unauthorized"})
-                        except:
-                            pass
-                        continue
+                elif act == "ping":
+                    await ws.send(json.dumps({"type": "pong"}))
 
-                # List devices doesn't need a target
-                if action == "list_devices":
-                    await _send_device_list(ws)
-                    continue
+                elif tgt in _termux and not _termux[tgt].closed:
+                    tw = _termux[tgt]
+                    if act == "input":
+                        await tw.send(json.dumps({"type": "input", "data": data.get("data", "")}))
+                    elif act == "resize":
+                        await tw.send(json.dumps({"type": "resize", "cols": data.get("cols", 80), "rows": data.get("rows", 24)}))
+                    elif act == "file_req":
+                        await tw.send(json.dumps({"type": "file_req", "path": data.get("path", "."), "mode": data.get("mode", "list"), "query": data.get("query", "*"), "req_id": data.get("req_id", "")}))
+                    elif act == "file_upload":
+                        await tw.send(json.dumps({"type": "file_upload", "path": data.get("path", ""), "content": data.get("content", ""), "req_id": data.get("req_id", "")}))
+                    elif act == "file_download":
+                        await tw.send(json.dumps({"type": "file_download", "path": data.get("path", ""), "req_id": data.get("req_id", "")}))
 
-                # All other actions need a target Termux device
-                tx_ws = termux_sockets.get(target)
-                if not tx_ws or tx_ws.closed:
-                    try:
-                        await ws.send_json({"type": "error", "msg": "Device not connected"})
-                    except:
-                        pass
-                    continue
-
-                if action == "input":
-                    try:
-                        await tx_ws.send_json({"type": "input", "data": data.get("data", "")})
-                    except:
-                        pass
-
-                elif action == "resize":
-                    try:
-                        await tx_ws.send_json({"type": "resize", "cols": data.get("cols", 80), "rows": data.get("rows", 24)})
-                    except:
-                        pass
-
-                elif action == "command":
-                    try:
-                        await tx_ws.send_json({"type": "command", "cmd": data.get("cmd", ""), "req_id": data.get("req_id", "")})
-                    except:
-                        pass
-
-                elif action == "file_req":
-                    try:
-                        await tx_ws.send_json({"type": "file_req", "path": data.get("path", "."), "mode": data.get("mode", "list"), "query": data.get("query", "*"), "req_id": data.get("req_id", "")})
-                    except:
-                        pass
-
-                elif action == "file_upload":
-                    try:
-                        await tx_ws.send_json({"type": "file_upload", "path": data.get("path", ""), "content": data.get("content", ""), "req_id": data.get("req_id", "")})
-                    except:
-                        pass
-
-                elif action == "file_download":
-                    try:
-                        await tx_ws.send_json({"type": "file_download", "path": data.get("path", ""), "req_id": data.get("req_id", "")})
-                    except:
-                        pass
-
-            elif msg.type == WSMsgType.PING:
-                await ws.pong()
-
-            elif msg.type in (WSMsgType.ERROR, WSMsgType.CLOSE):
+            elif raw.type in (8, 256):  # ERROR, CLOSE
                 break
-
     except Exception as e:
-        log(f"Browser {client_id} loop error: {e}")
+        log(f"Browser {cid} err: {e}")
     finally:
-        _cleanup_browser(client_id)
-
+        _browsers.pop(cid, None)
+        log(f"Browser {cid} closed")
     return ws
 
-
-async def ws_termux(request):
-    """WebSocket for Termux device clients."""
-    ws = web.WebSocketResponse(max_msg_size=MAX_MSG_SIZE, heartbeat=HEARTBEAT)
-    try:
-        await ws.prepare(request)
-    except Exception as e:
-        log(f"Termux WS prepare failed: {e}")
-        return ws
-
-    # Auth check
-    token = request.query.get("token", "")
+async def ws_termux(req):
+    ws = web.WebSocketResponse()
+    await ws.prepare(req)
+    token = req.query.get("token", "")
     if token != AUTH_TOKEN:
-        log("Termux auth rejected (bad token)")
-        try:
-            await ws.send_json({"type": "error", "msg": "Invalid token"})
-            await ws.close(code=4003, message=b"Bad token")
-        except:
-            pass
+        log("Termux auth FAILED")
+        await ws.send(json.dumps({"type": "error", "msg": "bad token"}))
+        await ws.close()
         return ws
-
-    client_id = str(uuid.uuid4())[:8]
-    termux_sockets[client_id] = ws
-    device_info = request.query.get("device", "Termux Device")
-    client_meta[client_id] = {"type": "termux", "device_info": device_info, "connected_at": time.time()}
-    log(f"Termux +{client_id} connected: {device_info}")
-
-    # Tell the device its ID
+    cid = str(uuid.uuid4())[:8]
+    _termux[cid] = ws
+    info = req.query.get("device", "Termux")
+    _meta[cid] = {"type": "termux", "device_info": info, "ts": time.time()}
+    log(f"Termux {cid} connected ({info})")
+    await ws.send(json.dumps({"type": "init", "client_id": cid}))
+    # notify browsers
+    payload = json.dumps({"type": "device_connected", "device": {"id": cid, "info": info}})
+    for bw in list(_browsers.values()):
+        if not bw.closed:
+            try: await bw.send(payload)
+            except: pass
     try:
-        await ws.send_json({"type": "init", "client_id": client_id})
-    except:
-        pass
-
-    # Notify all browsers about new device
-    await _broadcast_browsers({"type": "device_connected", "device": {"id": client_id, "info": device_info}})
-
-    try:
-        async for msg in ws:
-            if msg.type == WSMsgType.TEXT:
+        async for raw in ws:
+            if raw.type == 1:
                 try:
-                    data = json.loads(msg.data)
-                except json.JSONDecodeError:
+                    data = json.loads(raw.data)
+                except:
                     continue
-
-                msg_type = data.get("type")
-
-                if msg_type == "output":
-                    payload = {"type": "output", "data": data.get("data", ""), "source": client_id}
-                    await _broadcast_browsers(payload)
-
-                elif msg_type == "result":
-                    payload = {"type": "result", "data": data.get("data", {}), "source": client_id, "req_id": data.get("req_id", "")}
-                    await _broadcast_browsers(payload)
-
-                elif msg_type == "file_data":
-                    payload = {"type": "file_data", "data": data.get("data", {}), "source": client_id, "req_id": data.get("req_id", "")}
-                    await _broadcast_browsers(payload)
-
-                elif msg_type == "ping":
-                    try:
-                        await ws.send_json({"type": "pong"})
-                    except:
-                        pass
-
-            elif msg.type == WSMsgType.PING:
-                await ws.pong()
-
-            elif msg.type in (WSMsgType.ERROR, WSMsgType.CLOSE):
+                mt = data.get("type")
+                if mt in ("output", "result", "file_data"):
+                    out = json.dumps({"type": mt, "data": data.get("data", {}), "source": cid, "req_id": data.get("req_id", "")})
+                    for bw in list(_browsers.values()):
+                        if not bw.closed:
+                            try: await bw.send(out)
+                            except: pass
+                elif mt == "ping":
+                    await ws.send(json.dumps({"type": "pong"}))
+            elif raw.type in (8, 256):
                 break
-
     except Exception as e:
-        log(f"Termux {client_id} loop error: {e}")
+        log(f"Termux {cid} err: {e}")
     finally:
-        del termux_sockets.get(client_id, termux_sockets).__class__  # no-op check
-        if client_id in termux_sockets:
-            del termux_sockets[client_id]
-        client_meta.pop(client_id, None)
-        log(f"Termux -{client_id} disconnected")
-        await _broadcast_browsers({"type": "device_disconnected", "device_id": client_id})
-
+        _termux.pop(cid, None)
+        _meta.pop(cid, None)
+        log(f"Termux {cid} disconnected")
+        disc = json.dumps({"type": "device_disconnected", "device_id": cid})
+        for bw in list(_browsers.values()):
+            if not bw.closed:
+                try: await bw.send(disc)
+                except: pass
     return ws
 
-
-async def status(request):
-    devices = []
-    for tid, tws in termux_sockets.items():
-        if not tws.closed:
-            meta = client_meta.get(tid, {})
-            devices.append({"id": tid, "info": meta.get("device_info", "Unknown"), "connected_at": meta.get("connected_at", 0)})
-    browsers = len([b for b in browser_sockets.values() if not b.closed])
-    return web.json_response({"termux_devices": devices, "browser_clients": browsers, "uptime": time.time()})
-
-
-async def health(request):
-    return web.json_response({"status": "ok", "devices": len([t for t in termux_sockets.values() if not t.closed])})
-
-
-# ========== Helpers ==========
-
-async def _send_device_list(ws):
-    """Send current device list to a specific browser WS."""
-    devices = []
-    for tid, tws in list(termux_sockets.items()):
-        if not tws.closed:
-            meta = client_meta.get(tid, {})
-            devices.append({"id": tid, "info": meta.get("device_info", "Unknown")})
-    try:
-        await ws.send_json({"type": "devices", "devices": devices})
-    except Exception as e:
-        log(f"Failed to send device list: {e}")
-
-
-async def _broadcast_browsers(payload):
-    """Send a message to all connected browsers."""
-    dead = []
-    for bid, bws in list(browser_sockets.items()):
-        if bws.closed:
-            dead.append(bid)
-            continue
-        try:
-            await bws.send_json(payload)
-        except:
-            dead.append(bid)
-    for bid in dead:
-        _cleanup_browser(bid)
-
-
-def _cleanup_browser(client_id):
-    if client_id in browser_sockets:
-        try:
-            browser_sockets[client_id].close()
-        except:
-            pass
-        del browser_sockets[client_id]
-    client_meta.pop(client_id, None)
-    log(f"Browser -{client_id} cleaned up")
-
-
-def create_app():
-    app = web.Application()
-    app.router.add_get("/", index)
-    app.router.add_get("/ws/browser", ws_browser)
-    app.router.add_get("/ws/termux", ws_termux)
-    app.router.add_get("/api/status", status)
-    app.router.add_get("/api/health", health)
-    return app
-
+# ---------- App ----------
+app = web.Application()
+app.router.add_get("/", index)
+app.router.add_get("/api/health", health)
+app.router.add_get("/ws/browser", ws_browser)
+app.router.add_get("/ws/termux", ws_termux)
 
 if __name__ == "__main__":
-    app = create_app()
-    log(f"=== Termux Remote Controller ===")
-    log(f"Port: {PORT}")
-    log(f"Token: {AUTH_TOKEN}")
-    log(f"Heartbeat: {HEARTBEAT}s")
-    web.run_app(app, host="0.0.0.0", port=PORT)
+    log(f"=== START port={PORT} token={AUTH_TOKEN} ===")
+    web.run_app(app, host="0.0.0.0", port=PORT, print=None)
+    log("Server stopped")

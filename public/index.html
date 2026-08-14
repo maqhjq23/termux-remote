@@ -2,938 +2,483 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Termux Remote</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
-  --text:#e6edf3;--text-dim:#8b949e;--green:#3fb950;--green-dim:rgba(63,185,80,.15);
-  --red:#f85149;--yellow:#d29922;--blue:#58a6ff;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;font-size:14px}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--sf:#161b22;--sf2:#1c2128;--bd:#30363d;--tx:#e6edf3;--dim:#8b949e;--gn:#3fb950;--rd:#f85149;--yl:#d29922;--bl:#58a6ff}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Fira Code','Consolas',monospace;font-size:14px}
 
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeInUp{from{opacity:0;transform:translate(-50%,-50%) translateY(16px)}to{opacity:1;transform:translate(-50%,-50%) translateY(0)}}
-@keyframes slideDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
-@keyframes glow{0%,100%{box-shadow:0 0 4px var(--green)}50%{box-shadow:0 0 12px var(--green),0 0 24px rgba(63,185,80,.3)}}
-@keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
-@keyframes progressBar{from{width:0}to{width:100%}}
-@keyframes dotPulse{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse2{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 4px var(--gn)}50%{box-shadow:0 0 14px var(--gn)}}
+@keyframes toastIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1}to{transform:translateX(120%);opacity:0}}
+@keyframes bar{from{width:0}to{width:100%}}
 
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
-.spinner-sm{width:16px;height:16px;border-width:2px;margin:0;display:inline-block;vertical-align:middle}
-.pulse{animation:pulse 1.5s ease-in-out infinite}
-.fade-in{animation:fadeIn .4s ease-out}
+.spinner{width:36px;height:36px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
 
-/* === Toast === */
-#toast-container{position:fixed;top:44px;right:12px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{padding:10px 16px;border-radius:6px;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:toastIn .3s ease-out;min-width:220px;max-width:380px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
-.toast.out{animation:toastOut .3s ease-in forwards}
-.toast.info{background:var(--surface2);border:1px solid var(--blue);color:var(--blue)}
-.toast.success{background:var(--surface2);border:1px solid var(--green);color:var(--green)}
-.toast.error{background:var(--surface2);border:1px solid var(--red);color:var(--red)}
-.toast.warn{background:var(--surface2);border:1px solid var(--yellow);color:var(--yellow)}
-.toast i{font-size:14px;flex-shrink:0}
-.toast .toast-msg{flex:1;line-height:1.4}
-.toast .toast-close{cursor:pointer;opacity:.6;padding:0 2px}.toast .toast-close:hover{opacity:1}
+#toasts{position:fixed;top:42px;right:10px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:9px 14px;border-radius:6px;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:7px;pointer-events:auto;animation:toastIn .25s ease-out;box-shadow:0 4px 12px rgba(0,0,0,.5);max-width:360px}
+.toast.out{animation:toastOut .25s forwards}
+.toast.ok{background:var(--sf2);border:1px solid var(--gn);color:var(--gn)}
+.toast.err{background:var(--sf2);border:1px solid var(--rd);color:var(--rd)}
+.toast.warn{background:var(--sf2);border:1px solid var(--yl);color:var(--yl)}
+.toast.info{background:var(--sf2);border:1px solid var(--bl);color:var(--bl)}
 
-/* === Status Bar === */
-#statusbar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:10px;justify-content:space-between;flex-shrink:0}
-#statusbar .left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
-#statusbar .title{font-size:13px;font-weight:600;color:var(--green);white-space:nowrap}
-#statusbar .title i{margin-right:4px}
-.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:background .3s,box-shadow .3s;flex-shrink:0}
-.conn-dot.on{background:var(--green);animation:glow 2s ease-in-out infinite}
-.conn-dot.warn{background:var(--yellow);animation:pulse 1s ease-in-out infinite}
-#statusLabel{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#statusbar .right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-#statusbar .right button{background:var(--border);border:none;color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;transition:.2s}
-#statusbar .right button:hover{background:#484f58}
-#statusbar .right button.active{background:var(--green);color:#000}
+#statusbar{height:34px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
+#statusbar .left{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--rd);flex-shrink:0;transition:.3s}
+.dot.on{background:var(--gn);animation:glow 2s infinite}
+.dot.wait{background:var(--yl);animation:pulse2 1.2s infinite}
+#sLabel{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#statusbar .right{display:flex;gap:5px;flex-shrink:0}
+#statusbar button{background:var(--bd);border:none;color:var(--tx);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;transition:.15s}
+#statusbar button:hover{background:#484f58}
+#statusbar button.on{background:var(--gn);color:#000}
 
-/* === Main === */
-#main{display:flex;height:calc(100vh - 36px);position:relative}
-#terminal-wrap{flex:1;position:relative;overflow:hidden}
-#terminal{width:100%;height:100%;padding:4px 0}
+#main{display:flex;height:calc(100vh - 34px);position:relative}
+#twrap{flex:1;position:relative;overflow:hidden}
+#term{width:100%;height:100%;padding:2px 0}
 .xterm{height:100%}
-.xterm-viewport::-webkit-scrollbar{width:6px}.xterm-viewport::-webkit-scrollbar-track{background:transparent}.xterm-viewport::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+.xterm-viewport::-webkit-scrollbar{width:5px}.xterm-viewport::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
 
-/* === File Panel === */
-#filepanel{position:absolute;right:0;top:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s ease;z-index:20;display:flex;flex-direction:column}
-#filepanel.open{transform:translateX(0)}
-#filepanel .fp-header{height:40px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;justify-content:space-between;flex-shrink:0}
-#filepanel .fp-header h3{font-size:13px;font-weight:600}
-#filepanel .fp-header button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px}
-#filepanel .fp-header button:hover{color:var(--text)}
-#filepanel .fp-toolbar{height:38px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
-#filepanel .fp-toolbar input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none;min-width:0}
-#filepanel .fp-toolbar input:focus{border-color:var(--green)}
-#filepanel .fp-toolbar button{background:var(--border);border:none;color:var(--text);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap}
-#filepanel .fp-toolbar button:hover{background:#484f58}
-#filepanel .fp-body{flex:1;overflow-y:auto;padding:4px 0}
-.file-item{display:flex;align-items:center;padding:6px 12px;cursor:pointer;transition:.15s;border-left:3px solid transparent}
-.file-item:hover{background:rgba(255,255,255,.05)}
-.file-item i{width:18px;text-align:center;margin-right:8px;font-size:13px}
-.file-item .fname{flex:1;font-size:12px;word-break:break-all;min-width:0}
-.file-item .fsize{font-size:11px;color:var(--text-dim);margin-left:6px;white-space:nowrap}
-.file-item.dir i{color:var(--blue)}.file-item.file i{color:var(--text-dim)}
-.fp-loading{display:flex;align-items:center;justify-content:center;padding:24px;color:var(--text-dim);gap:8px;font-size:12px}
+/* Overlay */
+#overlay{position:absolute;inset:0;background:rgba(13,17,23,.97);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
+#overlay.off{opacity:0;pointer-events:none}
+#obox{text-align:center;padding:28px;max-width:400px;width:90%;animation:fadeInUp .4s ease-out}
+#obox .ico{font-size:44px;color:var(--gn);margin-bottom:14px}
+#obox h2{font-size:19px;margin-bottom:4px}
+#obox .sub{color:var(--dim);font-size:12px;margin-bottom:20px}
 
-/* === Modal === */
-#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;justify-content:center}
-#modal-overlay.show{display:flex}
-#modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:90%;max-width:500px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;animation:fadeIn .2s ease-out}
-#modal .m-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-#modal .m-header h3{font-size:14px}
-#modal .m-header button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:18px}
-#modal .m-body{padding:16px;overflow-y:auto;flex:1}
-#modal textarea{width:100%;height:300px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-family:inherit;font-size:12px;resize:vertical;outline:none}
-#modal textarea:focus{border-color:var(--green)}
-#modal .m-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
-#modal .m-footer button{padding:6px 16px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;font-size:12px;transition:.2s}
-#modal .btn-save{background:var(--green);color:#000}.btn-save:hover{opacity:.85}
-#modal .btn-cancel{background:var(--border);color:var(--text)}
+.fg{margin-bottom:14px;text-align:left}
+.fg label{display:block;font-size:10px;color:var(--dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fg input{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:9px 12px;border-radius:5px;font-family:inherit;font-size:13px;outline:none;transition:.2s}
+.fg input:focus{border-color:var(--gn)}
 
-/* === Virtual Keyboard === */
-#keyboard{display:none;height:auto;max-height:40vh;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;overflow-y:auto;padding:6px}
-#keyboard.show{display:block;animation:slideDown .2s ease-out}
-.kb-row{display:flex;justify-content:center;gap:4px;margin-bottom:4px}
-.kb-key{min-width:32px;height:36px;background:#21262d;border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.1s;padding:0 8px;flex-shrink:0}
-.kb-key:active{background:var(--green);color:#000;border-color:var(--green);transform:scale(.95)}
-.kb-key.special{background:#1c2128;color:var(--green);font-weight:600;font-size:11px}
-.kb-key.special.active{background:var(--green);color:#000}
-.kb-key.wide{min-width:56px}.kb-key.xwide{min-width:80px}
+.btn{padding:11px 28px;background:var(--gn);color:#000;border:none;border-radius:5px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.btn:hover{opacity:.85}.btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* === Overlay === */
-#connect-overlay{position:absolute;inset:0;background:rgba(13,17,23,.97);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
-#connect-overlay.hidden{opacity:0;pointer-events:none}
-#connect-box{text-align:center;padding:32px;max-width:380px;width:90%;animation:fadeInUp .5s ease-out}
-#connect-box .logo{font-size:48px;color:var(--green);margin-bottom:16px}
-#connect-box h2{margin-bottom:4px;font-size:20px;font-weight:700}
-#connect-box .subtitle{color:var(--text-dim);font-size:13px;margin-bottom:24px}
-.form-group{margin-bottom:16px;text-align:left}
-.form-group label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.form-group input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:6px;font-family:inherit;font-size:13px;outline:none;transition:.2s}
-.form-group input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim)}
-.form-group input[type=text].shake{animation:shake .4s ease;border-color:var(--red)!important}
-.btn-connect{padding:12px 32px;background:var(--green);color:#000;border:none;border-radius:6px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center}
-.btn-connect:hover{opacity:.9;transform:translateY(-1px)}.btn-connect:active{transform:translateY(0)}
-.btn-connect:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-connect .spinner-sm{border-color:rgba(0,0,0,.2);border-top-color:#000}
+.steps{text-align:left;margin-top:18px;padding:10px 14px;background:var(--bg);border-radius:6px;border:1px solid var(--bd);font-size:11px;display:none}
+.steps.show{display:block;animation:fadeInUp .3s}
+.step{display:flex;align-items:center;gap:7px;padding:4px 0;color:var(--dim)}
+.step i{width:14px;text-align:center;font-size:11px}
+.step.ok i{color:var(--gn)}.step.ok{color:var(--tx)}
+.step.fail i{color:var(--rd)}.step.fail{color:var(--rd)}
+.step.wait i{color:var(--yl);animation:pulse2 1s infinite}
 
-.status-display{text-align:left;margin-top:20px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:12px;display:none}
-.status-display.show{display:block;animation:fadeIn .3s ease-out}
-.status-row{display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text-dim);transition:color .2s}
-.status-row i{width:16px;text-align:center;font-size:12px}
-.status-row.ok i{color:var(--green)}.status-row.ok{color:var(--text)}
-.status-row.fail i{color:var(--red)}.status-row.fail{color:var(--red)}
-.status-row.wait i{color:var(--yellow);animation:dotPulse 1.2s infinite}.status-row.wait{color:var(--text-dim)}
+.rbar{height:3px;background:var(--bd);border-radius:2px;margin-top:10px;overflow:hidden;display:none}
+.rbar.show{display:block}
+.rbar div{height:100%;background:var(--yl);border-radius:2px;animation:bar 3s linear}
 
-.reconnect-bar{height:3px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden;display:none}
-.reconnect-bar.show{display:block}
-.reconnect-bar .reconnect-progress{height:100%;background:var(--yellow);border-radius:2px;animation:progressBar 3s linear}
+.hint{margin-top:16px;font-size:10px;color:var(--dim);line-height:1.6}
+.hint code{background:var(--bg);padding:1px 4px;border-radius:3px}
+.debug-url{font-size:10px;color:var(--dim);margin-top:8px;word-break:break-all;opacity:.6}
 
-.connect-hint{margin-top:20px;font-size:11px;color:var(--text-dim);line-height:1.7;max-width:320px;margin-left:auto;margin-right:auto}
-.connect-hint code{background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px}
-.connect-hint .hint-icon{margin-right:4px}
+/* File panel */
+#fp{position:absolute;right:0;top:0;bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .2s;z-index:20;display:flex;flex-direction:column}
+#fp.open{transform:translateX(0)}
+#fp .hd{height:36px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;justify-content:space-between;flex-shrink:0}
+#fp .hd h3{font-size:12px}
+#fp .hd button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px}
+#fp .tb{height:34px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 6px;gap:4px;flex-shrink:0}
+#fp .tb input{flex:1;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:3px 7px;border-radius:3px;font-size:11px;font-family:inherit;outline:none;min-width:0}
+#fp .tb input:focus{border-color:var(--gn)}
+#fp .tb button{background:var(--bd);border:none;color:var(--tx);padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px}
+#fp .tb button:hover{background:#484f58}
+#fp .body{flex:1;overflow-y:auto;padding:2px 0}
+.fi{display:flex;align-items:center;padding:5px 10px;cursor:pointer;transition:.1s;border-left:2px solid transparent}
+.fi:hover{background:rgba(255,255,255,.04)}
+.fi i{width:16px;text-align:center;margin-right:7px;font-size:12px}
+.fi .fn{flex:1;font-size:11px;word-break:break-all;min-width:0}
+.fi .fs{font-size:10px;color:var(--dim);margin-left:5px}
+.fi.dir i{color:var(--bl)}
+.fp-load{display:flex;align-items:center;justify-content:center;padding:20px;color:var(--dim);gap:6px;font-size:11px}
 
-@media(max-width:600px){
-  #filepanel{width:100%}
-  .kb-key{min-width:26px;height:32px;font-size:10px}
-  .kb-key.special{font-size:9px}
-  #connect-box{padding:24px 16px}
-  #connect-box h2{font-size:17px}
-}
+/* Modal */
+#modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;justify-content:center}
+#modal-bg.show{display:flex}
+#modal{background:var(--sf);border:1px solid var(--bd);border-radius:6px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column}
+#modal .mh{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+#modal .mh h3{font-size:13px}
+#modal .mh button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px}
+#modal .mb{padding:14px;flex:1;overflow-y:auto}
+#modal textarea{width:100%;height:280px;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:7px;border-radius:3px;font-family:inherit;font-size:11px;resize:vertical;outline:none}
+#modal textarea:focus{border-color:var(--gn)}
+#modal .mf{padding:10px 14px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:6px}
+#modal .mf button{padding:5px 14px;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-size:11px}
+#modal .bsv{background:var(--gn);color:#000}#modal .bcl{background:var(--bd);color:var(--tx)}
+
+/* Keyboard */
+#kb{display:none;height:auto;max-height:38vh;background:var(--sf);border-top:1px solid var(--bd);flex-shrink:0;overflow-y:auto;padding:5px}
+#kb.show{display:block}
+.kr{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
+.k{min-width:30px;height:33px;background:#21262d;border:1px solid var(--bd);border-radius:3px;color:var(--tx);font-size:11px;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.08s;padding:0 6px;flex-shrink:0}
+.k:active{background:var(--gn);color:#000;border-color:var(--gn);transform:scale(.94)}
+.k.sp{background:#1c2128;color:var(--gn);font-weight:600;font-size:10px}
+.k.sp.on{background:var(--gn);color:#000}
+.k.w{min-width:50px}.k.xw{min-width:74px}
+
+@media(max-width:600px){#fp{width:100%}.k{min-width:25px;height:30px;font-size:9px}.k.sp{font-size:9px}}
 </style>
 </head>
 <body>
 
-<div id="toast-container"></div>
+<div id="toasts"></div>
 
-<!-- Status Bar -->
 <div id="statusbar">
   <div class="left">
-    <div class="conn-dot" id="connDot"></div>
-    <span class="title"><i class="fas fa-terminal"></i> Termux</span>
-    <span id="statusLabel">Not connected</span>
+    <div class="dot" id="dot"></div>
+    <span style="font-size:12px;font-weight:600;color:var(--gn)"><i class="fas fa-terminal"></i> Termux</span>
+    <span id="sLabel">Not connected</span>
   </div>
   <div class="right">
-    <button id="btnKb" onclick="toggleKeyboard()"><i class="fas fa-keyboard"></i> Keys</button>
-    <button id="btnFm" onclick="toggleFilePanel()"><i class="fas fa-folder"></i> Files</button>
-    <button onclick="fitTerminal()"><i class="fas fa-expand"></i></button>
+    <button id="bKb" onclick="togKB()"><i class="fas fa-keyboard"></i> Keys</button>
+    <button id="bFp" onclick="togFP()"><i class="fas fa-folder"></i> Files</button>
+    <button onclick="fit()"><i class="fas fa-expand"></i></button>
   </div>
 </div>
 
-<!-- Main -->
 <div id="main">
-  <div id="terminal-wrap">
-    <div id="terminal"></div>
-
-    <!-- Connection Overlay -->
-    <div id="connect-overlay">
-      <div id="connect-box">
-        <div class="logo"><i class="fas fa-satellite-dish"></i></div>
+  <div id="twrap">
+    <div id="term"></div>
+    <div id="overlay">
+      <div id="obox">
+        <div class="ico"><i class="fas fa-satellite-dish"></i></div>
         <h2>Termux Remote</h2>
-        <p class="subtitle">Real-time terminal from your browser</p>
-
-        <div class="form-group">
+        <p class="sub">Real-time terminal from browser</p>
+        <div class="fg">
           <label>Auth Token</label>
-          <input type="text" id="tokenInput" placeholder="Enter auth token" value="termux-remote-2024">
+          <input type="text" id="tkIn" value="termux-remote-2024">
         </div>
-
-        <button class="btn-connect" id="btnConnect" onclick="doConnect()">
-          <i class="fas fa-plug"></i> <span id="btnText">Connect</span>
-        </button>
-
-        <div class="status-display" id="statusDisplay">
-          <div class="status-row" id="rowServer"><i class="fas fa-circle"></i><span>Server connection</span></div>
-          <div class="status-row" id="rowAuth"><i class="fas fa-circle"></i><span>Authentication</span></div>
-          <div class="status-row" id="rowDevice"><i class="fas fa-circle"></i><span>Termux device</span></div>
+        <button class="btn" id="cBtn" onclick="doConnect()"><i class="fas fa-plug"></i> <span id="cTxt">Connect</span></button>
+        <div class="debug-url" id="dbgUrl"></div>
+        <div class="steps" id="steps">
+          <div class="step" id="s1"><i class="fas fa-circle"></i><span>Health check</span></div>
+          <div class="step" id="s2"><i class="fas fa-circle"></i><span>WebSocket connection</span></div>
+          <div class="step" id="s3"><i class="fas fa-circle"></i><span>Termux device</span></div>
         </div>
-
-        <div class="reconnect-bar" id="reconnectBar">
-          <div class="reconnect-progress"></div>
-        </div>
-
-        <div class="connect-hint" id="connectHint">
-          Token must match <b>AUTH_TOKEN</b> env var on Railway.<br>
-          Make sure Termux client is running first:<br>
-          <code>bash ~/start_remote.sh</code>
+        <div class="rbar" id="rbar"><div></div></div>
+        <div class="hint" id="hint">
+          Token must match <b>AUTH_TOKEN</b> on Railway.<br>
+          Run on Termux: <code>bash ~/start_remote.sh</code>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- File Panel -->
-  <div id="filepanel">
-    <div class="fp-header">
-      <h3><i class="fas fa-folder-open"></i> Files</h3>
-      <button onclick="toggleFilePanel()"><i class="fas fa-times"></i></button>
+  <div id="fp">
+    <div class="hd"><h3><i class="fas fa-folder-open"></i> Files</h3><button onclick="togFP()"><i class="fas fa-times"></i></button></div>
+    <div class="tb">
+      <input id="fpPath" value="~" placeholder="Path">
+      <button onclick="fpList()"><i class="fas fa-sync-alt"></i></button>
+      <button onclick="fpFind()"><i class="fas fa-search"></i></button>
+      <button onclick="fpNav('..')"><i class="fas fa-level-up-alt"></i></button>
+      <button onclick="fpUpload()"><i class="fas fa-upload"></i></button>
+      <button onclick="fpCreate()"><i class="fas fa-plus"></i></button>
     </div>
-    <div class="fp-toolbar">
-      <input type="text" id="pathInput" value="~" placeholder="Path">
-      <button onclick="fileList()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
-      <button onclick="fileFind()"><i class="fas fa-search"></i></button>
-      <button onclick="fileNavigate('..')"><i class="fas fa-level-up-alt"></i></button>
-      <button onclick="showUploadModal()"><i class="fas fa-upload"></i></button>
-      <button onclick="showCreateModal()"><i class="fas fa-plus"></i></button>
-    </div>
-    <div class="fp-body" id="fileList"></div>
+    <div class="body" id="fpBody"></div>
   </div>
 </div>
 
-<!-- Virtual Keyboard -->
-<div id="keyboard">
-  <div class="kb-row">
-    <div class="kb-key special" onclick="sendKey('Escape')">ESC</div>
-    <div class="kb-key special" onclick="sendKey('Tab')">TAB</div>
-    <div class="kb-key special" data-mod="ctrl" onclick="toggleMod('ctrl',this)">Ctrl</div>
-    <div class="kb-key special" data-mod="alt" onclick="toggleMod('alt',this)">Alt</div>
-    <div class="kb-key wide" onclick="sendKey('Backspace')"><i class="fas fa-delete-left"></i></div>
-    <div class="kb-key special" onclick="sendKey('End')">End</div>
-    <div class="kb-key special" onclick="sendKey('Home')">Home</div>
-    <div class="kb-key special" onclick="sendKey('PageUp')">PgUp</div>
-    <div class="kb-key special" onclick="sendKey('PageDown')">PgDn</div>
+<div id="kb">
+  <div class="kr">
+    <div class="k sp" onclick="sKey('Escape')">ESC</div><div class="k sp" onclick="sKey('Tab')">TAB</div>
+    <div class="k sp" data-m="ctrl" onclick="togM('ctrl',this)">Ctrl</div><div class="k sp" data-m="alt" onclick="togM('alt',this)">Alt</div>
+    <div class="k w" onclick="sKey('Backspace')"><i class="fas fa-delete-left"></i></div>
+    <div class="k sp" onclick="sKey('End')">End</div><div class="k sp" onclick="sKey('Home')">Home</div>
+    <div class="k sp" onclick="sKey('PageUp')">PgUp</div><div class="k sp" onclick="sKey('PageDown')">PgDn</div>
   </div>
-  <div class="kb-row">
-    <div class="kb-key special" onclick="sendKey('F1')">F1</div>
-    <div class="kb-key special" onclick="sendKey('F2')">F2</div>
-    <div class="kb-key special" onclick="sendKey('F3')">F3</div>
-    <div class="kb-key special" onclick="sendKey('F4')">F4</div>
-    <div class="kb-key special" onclick="sendKey('F5')">F5</div>
-    <div class="kb-key special" onclick="sendKey('F6')">F6</div>
-    <div class="kb-key special" onclick="sendKey('F7')">F7</div>
-    <div class="kb-key special" onclick="sendKey('F8')">F8</div>
-    <div class="kb-key special" onclick="sendKey('F9')">F9</div>
-    <div class="kb-key special" onclick="sendKey('F10')">F10</div>
+  <div class="kr">
+    <div class="k sp" onclick="sKey('F1')">F1</div><div class="k sp" onclick="sKey('F2')">F2</div><div class="k sp" onclick="sKey('F3')">F3</div><div class="k sp" onclick="sKey('F4')">F4</div>
+    <div class="k sp" onclick="sKey('F5')">F5</div><div class="k sp" onclick="sKey('F6')">F6</div><div class="k sp" onclick="sKey('F7')">F7</div><div class="k sp" onclick="sKey('F8')">F8</div>
+    <div class="k sp" onclick="sKey('F9')">F9</div><div class="k sp" onclick="sKey('F10')">F10</div>
   </div>
-  <div class="kb-row">
-    <div class="kb-key special" onclick="sendKey('F11')">F11</div>
-    <div class="kb-key special" onclick="sendKey('F12')">F12</div>
-    <div class="kb-key special" onclick="sendKey('Insert')">Ins</div>
-    <div class="kb-key special" onclick="sendKey('Delete')">Del</div>
-    <div class="kb-key" onclick="sendKey('`')">`</div>
-    <div class="kb-key" onclick="sendKey('~')">~</div>
-    <div class="kb-key" onclick="sendKey('|')">|</div>
-    <div class="kb-key" onclick="sendKey('\\')">\\</div>
+  <div class="kr">
+    <div class="k sp" onclick="sKey('F11')">F11</div><div class="k sp" onclick="sKey('F12')">F12</div>
+    <div class="k sp" onclick="sKey('Insert')">Ins</div><div class="k sp" onclick="sKey('Delete')">Del</div>
+    <div class="k" onclick="sKey('`')">`</div><div class="k" onclick="sKey('~')">~</div><div class="k" onclick="sKey('|')">|</div><div class="k" onclick="sKey('\\')">\\</div>
   </div>
-  <div class="kb-row">
-    <div class="kb-key" onclick="sendKey('ArrowUp')"><i class="fas fa-arrow-up"></i></div>
-    <div class="kb-key" onclick="sendKey('ArrowDown')"><i class="fas fa-arrow-down"></i></div>
-    <div class="kb-key" onclick="sendKey('ArrowLeft')"><i class="fas fa-arrow-left"></i></div>
-    <div class="kb-key" onclick="sendKey('ArrowRight')"><i class="fas fa-arrow-right"></i></div>
-    <div class="kb-key xwide special" onclick="sendKey('Enter')">Enter</div>
-    <div class="kb-key wide" onclick="sendKey(' ')">Space</div>
+  <div class="kr">
+    <div class="k" onclick="sKey('ArrowUp')"><i class="fas fa-arrow-up"></i></div><div class="k" onclick="sKey('ArrowDown')"><i class="fas fa-arrow-down"></i></div>
+    <div class="k" onclick="sKey('ArrowLeft')"><i class="fas fa-arrow-left"></i></div><div class="k" onclick="sKey('ArrowRight')"><i class="fas fa-arrow-right"></i></div>
+    <div class="k xw sp" onclick="sKey('Enter')">Enter</div><div class="k w" onclick="sKey(' ')">Space</div>
   </div>
 </div>
 
-<!-- Modal -->
-<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div id="modal-bg" onclick="if(event.target===this)clMod()">
   <div id="modal">
-    <div class="m-header">
-      <h3 id="modalTitle">Edit File</h3>
-      <button onclick="closeModal()">&times;</button>
-    </div>
-    <div class="m-body">
-      <textarea id="modalTextarea" placeholder="Content..."></textarea>
-    </div>
-    <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" id="modalSaveBtn" onclick="modalSave()">Save</button>
-    </div>
+    <div class="mh"><h3 id="mT">Edit</h3><button onclick="clMod()">&times;</button></div>
+    <div class="mb"><textarea id="mTa"></textarea></div>
+    <div class="mf"><button class="bcl" onclick="clMod()">Cancel</button><button class="bsv" id="mSv" onclick="modSave()">Save</button></div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xtermAddonFit.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xtermAddonWebLinks.min.js"></script>
-
 <script>
-/* ================================================
-   STATE
-   ================================================ */
-let ws = null;
-let term = null;
-let fitAddon = null;
-let authToken = 'termux-remote-2024';
-let deviceId = null;
-let activeMods = { ctrl: false, alt: false };
-let pendingReq = {};
-let reqCounter = 0;
-let currentFilePath = null;
+/* ===== STATE ===== */
+let ws=null,term=null,fitA=null,devId=null,tk='termux-remote-2024';
+let mods={ctrl:0,alt:0},pend={},rc=0,curPath=null;
+let wsOk=false,serverOk=false,userClick=false;
+let rTimer=null,rCount=0,pollT=null,kaT=null;
+const $=id=>document.getElementById(id);
 
-// Connection state
-let wsReady = false;           // ws.readyState === OPEN
-let serverReached = false;      // onopen fired at least once
-let reconnectTimer = null;
-let reconnectAttempt = 0;
-let devicePollTimer = null;    // polls for devices when waiting
-let keepaliveTimer = null;     // client-side ping to keep proxy alive
-let userInitiated = false;     // did user click Connect?
-let intentionalClose = false;  // we closed it ourselves
+/* ===== TOAST ===== */
+function toast(m,t='info',d=4000){const c=$('toasts'),e=document.createElement('div');e.className='toast '+t;e.innerHTML='<i class="fas fa-'+({info:'circle-info',ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation'}[t]||'circle-info')+'"></i><span>'+m+'</span>';c.appendChild(e);if(d>0)setTimeout(()=>{e.classList.add('out');setTimeout(()=>e.remove(),300)},d)}
 
-/* ================================================
-   TOAST
-   ================================================ */
-function toast(msg, type='info', ms=4000) {
-  const c = document.getElementById('toast-container');
-  const icons = {info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warn:'fa-triangle-exclamation'};
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.innerHTML = '<i class="fas '+(icons[type]||icons.info)+'"></i><span class="toast-msg">'+msg+'</span><span class="toast-close" onclick="dismissToast(this.parentElement)">&times;</span>';
-  c.appendChild(el);
-  if (ms > 0) setTimeout(() => dismissToast(el), ms);
-  return el;
-}
-function dismissToast(el) {
-  if (!el || !el.parentElement) return;
-  el.classList.add('out');
-  setTimeout(() => el.remove(), 300);
-}
+/* ===== STEP HELPERS ===== */
+function ss(id,st,txt){const r=$(id);const ic={ok:'fa-circle-check',fail:'fa-circle-xmark',wait:'fa-circle-dot'};r.className='step'+(st?' '+st:'');r.querySelector('i').className='fas '+(ic[st]||'fa-circle');r.querySelector('span').textContent=txt}
+function sDot(c,s){$('dot').className='dot'+(c?' '+c:'');$('sLabel').textContent=s}
+function sBtn(t,ic,d){$('cTxt').textContent=t;$('cBtn').querySelector('i').className='fas '+ic;$('cBtn').disabled=!!d}
 
-/* ================================================
-   UI HELPERS
-   ================================================ */
-const $ = id => document.getElementById(id);
-
-function setRow(id, status, text) {
-  const row = $(id);
- const iconMap = {ok:'fa-circle-check', fail:'fa-circle-xmark', wait:'fa-circle-dot'};
- const ico = status && iconMap[status] ? iconMap[status] : 'fa-circle';
- row.className = 'status-row' + (status ? ' ' + status : '');
- row.innerHTML = '<i class="fas ' + ico + '"></i><span>' + text + '</span>';
-}
-
-function setStatus(label, dotClass) {
-  $('statusLabel').textContent = label;
-  $('connDot').className = 'conn-dot' + (dotClass ? ' ' + dotClass : '');
-}
-
-function setBtn(text, icon, disabled) {
-  $('btnText').textContent = text;
-  $('btnConnect').querySelector('i').className = 'fas ' + icon;
-  $('btnConnect').disabled = !!disabled;
-}
-
-/* ================================================
-   TERMINAL
-   ================================================ */
-function initTerminal() {
-  term = new Terminal({
-    theme: {
-      background:'#0d1117', foreground:'#e6edf3', cursor:'#3fb950', cursorAccent:'#0d1117',
-      selectionBackground:'rgba(63,185,80,0.3)',
-      black:'#484f58',red:'#f85149',green:'#3fb950',yellow:'#d29922',blue:'#58a6ff',magenta:'#bc8cff',cyan:'#39c5cf',white:'#e6edf3',
-      brightBlack:'#6e7681',brightRed:'#ff7b72',brightGreen:'#56d364',brightYellow:'#e3b341',brightBlue:'#79c0ff',brightMagenta:'#d2a8ff',brightCyan:'#56d4dd',brightWhite:'#ffffff'
-    },
-    fontFamily:"'Fira Code','Cascadia Code','JetBrains Mono',monospace",
-    fontSize:14, cursorBlink:true, cursorStyle:'block', scrollback:5000,
-    allowProposedApi:true, allowTransparency:true
+/* ===== TERMINAL ===== */
+function initTerm(){
+  term=new Terminal({
+    theme:{background:'#0d1117',foreground:'#e6edf3',cursor:'#3fb950',cursorAccent:'#0d1117',selectionBackground:'rgba(63,185,80,.3)',black:'#484f58',red:'#f85149',green:'#3fb950',yellow:'#d29922',blue:'#58a6ff',magenta:'#bc8cff',cyan:'#39c5cf',white:'#e6edf3',brightBlack:'#6e7681',brightRed:'#ff7b72',brightGreen:'#56d364',brightYellow:'#e3b341',brightBlue:'#79c0ff',brightMagenta:'#d2a8ff',brightCyan:'#56d4dd',brightWhite:'#fff'},
+    fontFamily:"'Fira Code','Consolas',monospace",fontSize:14,cursorBlink:true,cursorStyle:'block',scrollback:5000,allowProposedApi:true,allowTransparency:true
   });
-  fitAddon = new FitAddon.FitAddon();
-  term.loadAddon(fitAddon);
+  fitA=new FitAddon.FitAddon();
+  term.loadAddon(fitA);
   term.loadAddon(new WebLinksAddon.WebLinksAddon());
-  term.open($('terminal'));
-  fitAddon.fit();
-
-  term.onData(data => {
-    if (!wsReady || !deviceId) return;
-    wsSend({action:'input', data, target:deviceId});
-  });
-  term.onResize(({cols, rows}) => {
-    if (!wsReady || !deviceId) return;
-    wsSend({action:'resize', cols, rows, target:deviceId});
-  });
-
-  window.addEventListener('resize', () => { if (fitAddon) fitAddon.fit(); });
-
-  term.writeln('\x1b[36m  Termux Remote Controller\x1b[0m');
-  term.writeln('\x1b[90m  Waiting for connection...\x1b[0m\n');
+  term.open($('term'));
+  fitA.fit();
+  term.onData(d=>{if(wsOk&&devId)wsSend({action:'input',data:d,target:devId})});
+  term.onResize(({cols,rows})=>{if(wsOk&&devId)wsSend({action:'resize',cols,rows,target:devId})});
+  window.addEventListener('resize',()=>{if(fitA)fitA.fit()});
+  term.writeln('\x1b[36m  Termux Remote Controller\x1b[0m\n');
 }
+function fit(){if(fitA)setTimeout(()=>fitA.fit(),50)}
 
-function fitTerminal() { if (fitAddon) setTimeout(() => fitAddon.fit(), 60); }
+/* ===== WEBSOCKET ===== */
+function wsSend(d){if(!ws||ws.readyState!==1)return;d.token=tk;ws.send(JSON.stringify(d))}
 
-/* ================================================
-   WEBSOCKET  —  the critical part
-   ================================================ */
-function openWS() {
-  // Clean up previous
-  closeWS(true);
-  intentionalClose = false;
+function openWS(){
+  killWS(true);
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  const url=proto+'//'+location.host+'/ws/browser';
+  
+  // Show URL for debugging
+  $('dbgUrl').textContent=url;
+  
+  sBtn('Connecting...','fa-circle-notch fa-spin',true);
+  sDot('wait','Connecting...');
+  ss('s2','wait','Opening WebSocket...');
+  $('steps').classList.add('show');
+  $('hint').style.display='none';
+  $('rbar').classList.remove('show');
 
-  // UI: connecting
-  setBtn('Connecting...', 'fa-circle-notch fa-spin', true);
-  setStatus('Connecting...', 'warn');
-  setRow('rowServer', 'wait', 'Connecting to server...');
-  setRow('rowAuth', '', 'Waiting...');
-  setRow('rowDevice', '', 'Waiting...');
-  $('statusDisplay').classList.add('show');
-  $('connectHint').style.display = 'none';
-  $('reconnectBar').classList.remove('show');
-
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = proto + '//' + location.host + '/ws/browser';
-
-  try {
-    ws = new WebSocket(url);
-  } catch(e) {
-    showOffline('Failed to create WebSocket');
-    return;
+  try{ws=new WebSocket(url)}catch(e){
+    ss('s2','fail','Failed: '+e.message);
+    sDot('','Failed');sBtn('Retry','fa-rotate');toast('WebSocket error: '+e.message,'err');
+    schedReconn();return;
   }
 
-  // 10s connection timeout
-  const connTimeout = setTimeout(() => {
-    if (!wsReady) {
-      ws.close();
-      showOffline('Connection timed out (10s)');
-    }
-  }, 10000);
+  // 8s timeout
+  const ct=setTimeout(()=>{if(!wsOk){ws.close();ss('s2','fail','Timeout (8s)');sDot('','Timeout');sBtn('Retry','fa-rotate');toast('WebSocket timeout','err');schedReconn()}},8000);
 
-  ws.onopen = () => {
-    clearTimeout(connTimeout);
-    wsReady = true;
-    serverReached = true;
-    reconnectAttempt = 0;
-    startKeepalive();
-    startDevicePoll();
-
-    // UI: server OK
-    setRow('rowServer', 'ok', 'Server connected');
-    setRow('rowAuth', 'ok', 'Authenticated');
-    setRow('rowDevice', 'wait', 'Looking for device...');
-    setStatus('Connected to server', 'warn');
-    setBtn('Connected', 'fa-check', false);
-
-    // Ask for device list
+  ws.onopen=()=>{
+    clearTimeout(ct);wsOk=true;serverOk=true;rCount=0;
+    startKA();startPoll();
+    ss('s2','ok','Connected');
+    ss('s3','wait','Looking for device...');
+    sDot('wait','Server OK, no device');
+    sBtn('Searching...','fa-magnifying-glass');
     wsSend({action:'list_devices'});
   };
 
-  ws.onmessage = e => {
-    try { handleMsg(JSON.parse(e.data)); } catch(err) { console.error('msg parse:', err); }
-  };
+  ws.onmessage=e=>{try{handleMsg(JSON.parse(e.data))}catch(er){console.error(er)}};
 
-  ws.onclose = e => {
-    clearTimeout(connTimeout);
-    const wasReady = wsReady;
-    wsReady = false;
-    stopKeepalive();
-
-    // If we intentionally closed, do nothing
-    if (intentionalClose) return;
-
-    // If we never reached onopen, it's a real connection failure
-    if (!serverReached) {
-      showOffline('Cannot reach server');
-      scheduleReconnect();
-      return;
-    }
-
-    // We had a connection before. Code 1000/1001 = normal close (proxy, idle, etc)
-    // Just reconnect silently unless we had an active device
-    const normalClose = (e.code === 1000 || e.code === 1001 || e.code === 1005);
-
-    if (deviceId) {
-      // We had an active session — that's a real problem
-      deviceId = null;
-      setStatus('Reconnecting...', 'warn');
-      toast('Device connection lost. Reconnecting...', 'warn', 3000);
-      if (term) term.writeln('\r\n\x1b[33m[!] Connection lost. Reconnecting...\x1b[0m');
-      $('connect-overlay').classList.remove('hidden');
-      setRow('rowDevice', 'wait', 'Reconnecting...');
-    } else if (!normalClose && e.code >= 4000) {
-      // Server sent an error code
-      if (e.code === 4003) {
-        showOffline('Authentication failed');
-        $('tokenInput').classList.add('shake');
-        setTimeout(() => $('tokenInput').classList.remove('shake'), 500);
-      } else {
-        showOffline('Server error (code ' + e.code + ')');
-      }
+  ws.onclose=e=>{
+    clearTimeout(ct);wsOk=false;stopKA();
+    if(!serverOk){
+      // Never connected at all
+      ss('s2','fail','Closed code='+e.code);
+      sDot('','Disconnected');sBtn('Retry','fa-rotate');
+      schedReconn();
+    } else if(devId){
+      // Had active session
+      devId=null;startPoll();
+      sDot('wait','Reconnecting...');
+      $('overlay').classList.remove('off');
+      ss('s2','wait','Reconnecting...');ss('s3','wait','');
+      if(term)term.writeln('\r\n\x1b[33m[!] Connection lost. Reconnecting...\x1b[0m\r\n');
+      toast('Connection lost','warn',3000);
+      schedReconn();
     } else {
-      // Normal transient close (1000/1001) or unknown — just reconnect silently
-      console.log('WS closed: code=' + e.code + ' reason=' + e.reason + ', reconnecting silently');
-      setStatus('Reconnecting...', 'warn');
-      setRow('rowServer', 'wait', 'Reconnecting...');
-      setRow('rowAuth', '', '---');
-      setRow('rowDevice', '', '---');
+      // Transient close (no device was active) — reconnect silently
+      console.log('WS transient close, code='+e.code);
+      sDot('wait','Reconnecting...');ss('s2','wait','Reconnecting...');ss('s3','');
+      schedReconn();
     }
-
-    scheduleReconnect();
   };
-
-  ws.onerror = () => {
-    // onclose always fires after onerror, handle there
-  };
+  ws.onerror=()=>{};
 }
 
-function closeWS(silent) {
-  intentionalClose = true;
-  stopKeepalive();
-  stopDevicePoll();
-  if (ws) {
-    try { ws.close(); } catch(e) {}
-    ws = null;
-  }
-  wsReady = false;
+function killWS(silent){
+  stopKA();stopPoll();
+  if(ws){try{ws.close()}catch(e){}ws=null}
+  wsOk=false;
 }
 
-function wsSend(data) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  data.token = authToken;
-  ws.send(JSON.stringify(data));
+/* Keepalive — prevent proxy idle close */
+function startKA(){stopKA();kaT=setInterval(()=>{if(wsOk)wsSend({action:'ping'})},12000)}
+function stopKA(){clearInterval(kaT);kaT=null}
+
+/* Device polling */
+function startPoll(){stopPoll();pollT=setInterval(()=>{if(wsOk&&!devId)wsSend({action:'list_devices'})},3000)}
+function stopPoll(){clearInterval(pollT);pollT=null}
+
+/* Reconnect */
+function schedReconn(){
+  stopKA();stopPoll();
+  if(!userClick&&!serverOk)return;
+  rCount++;
+  const d=Math.min(2000+rCount*800,8000);
+  const s=Math.ceil(d/1000);
+  sDot('wait','Retry in '+s+'s');sBtn('Retry '+s+'s','fa-circle-notch fa-spin',true);
+  const b=$('rbar');b.classList.add('show');const p=b.querySelector('div');p.style.animation='none';p.offsetHeight;p.style.animation='bar '+s+'s linear';
+  clearTimeout(rTimer);
+  rTimer=setTimeout(()=>{b.classList.remove('show');openWS()},d);
 }
 
-/* ================================================
-   KEEPALIVE  —  prevent Railway proxy from closing idle WS
-   ================================================ */
-function startKeepalive() {
-  stopKeepalive();
-  keepaliveTimer = setInterval(() => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      wsSend({action:'ping'});  // server ignores unknown actions
-    }
-  }, 15000); // every 15s
-}
-function stopKeepalive() { clearInterval(keepaliveTimer); keepaliveTimer = null; }
-
-/* ================================================
-   DEVICE POLLING  —  keep asking for devices while waiting
-   ================================================ */
-function startDevicePoll() {
-  stopDevicePoll();
-  devicePollTimer = setInterval(() => {
-    if (wsReady && !deviceId) {
-      wsSend({action:'list_devices'});
-    }
-  }, 4000); // every 4s
-}
-function stopDevicePoll() { clearInterval(devicePollTimer); devicePollTimer = null; }
-
-/* ================================================
-   RECONNECT
-   ================================================ */
-function scheduleReconnect() {
-  stopKeepalive();
-  stopDevicePoll();
-  if (!userInitiated && !serverReached) return; // don't auto-reconnect if user never tried
-
-  reconnectAttempt++;
-  const delay = Math.min(2000 + reconnectAttempt * 1000, 10000);
-  const secs = Math.ceil(delay / 1000);
-
-  setStatus('Reconnect in ' + secs + 's', 'warn');
-  setBtn('Reconnect ' + secs + 's', 'fa-circle-notch fa-spin', true);
-
-  const bar = $('reconnectBar');
-  bar.classList.add('show');
-  const prog = bar.querySelector('.reconnect-progress');
-  prog.style.animation = 'none';
-  prog.offsetHeight;
-  prog.style.animation = 'progressBar ' + secs + 's linear';
-
-  clearTimeout(reconnectTimer);
-  reconnectTimer = setTimeout(() => {
-    bar.classList.remove('show');
-    openWS();
-  }, delay);
-}
-
-/* ================================================
-   SHOW OFFLINE / WAITING  —  update overlay for errors
-   ================================================ */
-function showOffline(reason) {
-  setRow('rowServer', 'fail', reason || 'Connection failed');
-  setRow('rowAuth', '', '---');
-  setRow('rowDevice', '', '---');
-  setStatus('Offline', '');
-  setBtn('Retry', 'fa-rotate', false);
-  toast(reason || 'Connection failed', 'error', 5000);
-}
-
-function showWaiting() {
-  setRow('rowServer', 'ok', 'Server connected');
-  setRow('rowAuth', 'ok', 'Authenticated');
-  setRow('rowDevice', 'fail', 'No Termux device online');
-  setStatus('No device', 'warn');
-  setBtn('Searching...', 'fa-magnifying-glass fa-spin', false);
-  $('connectHint').innerHTML = '<i class="fas fa-mobile-screen-button hint-icon" style="color:var(--yellow)"></i> '
-    + 'No Termux device detected.<br>'
-    + 'Run on your Termux: <code>bash ~/start_remote.sh</code><br>'
-    + 'This page will auto-detect when a device connects.';
-  $('connectHint').style.display = '';
-}
-
-/* ================================================
-   MESSAGE HANDLER
-   ================================================ */
-function handleMsg(msg) {
-  switch(msg.type) {
-    case 'init':
-      // browser got its ID, nothing to do
+/* ===== MESSAGE HANDLER ===== */
+function handleMsg(m){
+  switch(m.type){
+    case'devices':
+      if(devId)return;
+      if(m.devices&&m.devices.length>0){pickDev(m.devices[0])}
+      else if(serverOk){showWaiting()}
       break;
-
-    case 'devices':
-      handleDevices(msg.devices || []);
+    case'device_connected':
+      if(!devId)pickDev(m.device);
+      else toast('New: '+(m.device.info||m.device.id),'info',3000);
       break;
-
-    case 'device_connected':
-      if (!deviceId) {
-        pickDevice(msg.device);
-      } else {
-        toast('New device: ' + (msg.device.info || msg.device.id), 'info', 3000);
-      }
-      break;
-
-    case 'device_disconnected':
-      if (msg.device_id === deviceId) {
-        deviceId = null;
-        stopDevicePoll();
-        startDevicePoll();
-        showWaiting();
-        $('connect-overlay').classList.remove('hidden');
-        if (term) {
-          term.writeln('\r\n\x1b[33m[!] Device disconnected.\x1b[0m');
-          term.writeln('\x1b[90m  Waiting for device...\x1b[0m\r\n');
-        }
-        toast('Device disconnected', 'warn', 5000);
-      }
-      break;
-
-    case 'output':
-      if (msg.source === deviceId && term) term.write(msg.data);
-      break;
-
-    case 'result':
-      handleResult(msg);
-      break;
-
-    case 'file_data':
-      handleFileData(msg);
-      break;
-
-    case 'error':
-      if (msg.msg && (msg.msg.includes('Unauthorized') || msg.msg.includes('token'))) {
-        toast('Wrong auth token!', 'error', 5000);
-      }
-      break;
+    case'device_disconnected':
+      if(m.device_id===devId){
+        devId=null;startPoll();showWaiting();
+        $('overlay').classList.remove('off');
+        if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
+        toast('Device disconnected','warn');
+      }break;
+    case'output':
+      if(m.source===devId&&term)term.write(m.data);break;
+    case'result':handleRes(m);break;
+    case'file_data':handleFD(m);break;
+    case'pong':break;
   }
 }
 
-function handleDevices(devices) {
-  if (deviceId) return; // already connected
-
-  if (devices.length > 0) {
-    pickDevice(devices[0]);
-  } else if (serverReached) {
-    // Server is up but no device — show waiting state
-    // Only show toast once (first time)
-    if (reconnectAttempt === 0 && !$('connect-overlay').classList.contains('hidden') === false) {
-      // overlay is visible, just update it silently
-    }
-    showWaiting();
-  }
+function pickDev(d){
+  devId=d.id;stopPoll();
+  ss('s3','ok','Device: '+(d.info||d.id));
+  sDot('on','Device: '+devId);sBtn('Connected','fa-check');
+  $('overlay').classList.add('off');
+  toast('Connected to '+(d.info||d.id),'ok');
+  if(term){term.writeln('\x1b[32m[OK] Device: '+(d.info||d.id)+'\x1b[0m\n')}
+  setTimeout(()=>{if(term&&fitA){fitA.fit();wsSend({action:'resize',cols:term.cols,rows:term.rows,target:devId})}},400);
 }
 
-function pickDevice(device) {
-  deviceId = device.id;
-  stopDevicePoll();
-
-  setRow('rowDevice', 'ok', 'Device: ' + (device.info || device.id));
-  setStatus('Device: ' + deviceId, 'on');
-  setBtn('Connected', 'fa-check', false);
-  $('connect-overlay').classList.add('hidden');
-  toast('Connected to ' + (device.info || device.id), 'success');
-
-  if (term) {
-    term.writeln('\x1b[32m[OK] Connected to device: ' + (device.info || device.id) + '\x1b[0m\n');
-  }
-
-  // Send terminal size after overlay fades
-  setTimeout(() => {
-    if (term && fitAddon) {
-      fitAddon.fit();
-      wsSend({action:'resize', cols:term.cols, rows:term.rows, target:deviceId});
-    }
-  }, 400);
+function showWaiting(){
+  ss('s1','ok','Server OK');ss('s2','ok','WebSocket OK');
+  ss('s3','fail','No device online');
+  sDot('wait','No device');sBtn('Waiting...','fa-magnifying-glass');
+  $('hint').innerHTML='<i class="fas fa-mobile-screen-button" style="color:var(--yl)"></i> No Termux device detected.<br>Run on Termux: <code>bash ~/start_remote.sh</code><br><span style="opacity:.7">Auto-detecting every 3s...</span>';
+  $('hint').style.display='';
 }
 
-/* ================================================
-   CONNECT BUTTON
-   ================================================ */
-function doConnect() {
-  const val = $('tokenInput').value.trim();
-  if (!val) {
-    $('tokenInput').classList.add('shake');
-    setTimeout(() => $('tokenInput').classList.remove('shake'), 500);
-    toast('Enter an auth token', 'warn');
-    return;
-  }
-  authToken = val;
-  userInitiated = true;
-  serverReached = false;
-  reconnectAttempt = 0;
-  clearTimeout(reconnectTimer);
-  openWS();
-}
+/* ===== CONNECT BUTTON ===== */
+async function doConnect(){
+  tk=$('tkIn').value.trim();
+  if(!tk){toast('Enter token','warn');return}
+  userClick=true;serverOk=false;devId=null;rCount=0;
+  clearTimeout(rTimer);
 
-/* ================================================
-   VIRTUAL KEYBOARD
-   ================================================ */
-function toggleKeyboard() {
-  const kb = $('keyboard');
-  kb.classList.toggle('show');
-  $('btnKb').classList.toggle('active');
-  if (kb.classList.contains('show')) setTimeout(fitTerminal, 100);
-}
+  // Step 1: Health check first
+  sBtn('Checking...','fa-circle-notch fa-spin',true);
+  sDot('wait','Checking server...');
+  ss('s1','wait','Checking server...');
+  ss('s2','','');ss('s3','');
+  $('steps').classList.add('show');
+  $('hint').style.display='none';
+  $('rbar').classList.remove('show');
 
-function toggleMod(mod, el) {
-  activeMods[mod] = !activeMods[mod];
-  el.classList.toggle('active', activeMods[mod]);
-}
-
-function sendKey(key) {
-  if (!wsReady || !deviceId) { toast('No device connected', 'warn', 2000); return; }
-
-  const ctrl = activeMods.ctrl, alt = activeMods.alt;
-  activeMods.ctrl = false; activeMods.alt = false;
-  document.querySelectorAll('.kb-key[data-mod]').forEach(e => e.classList.remove('active'));
-
-  let seq = '';
-  if (ctrl || alt) {
-    const map = {a:'\x01',b:'\x02',c:'\x03',d:'\x04',e:'\x05',f:'\x06',g:'\x07',h:'\x08',i:'\x09',j:'\x0a',k:'\x0b',l:'\x0c',m:'\x0d',n:'\x0e',o:'\x0f',p:'\x10',q:'\x11',r:'\x12',s:'\x13',t:'\x14',u:'\x15',v:'\x16',w:'\x17',x:'\x18',y:'\x19',z:'\x1a','[':'\x1b',']':'\x1d', '\\':'\x1c','/':'\x1f',' ':'\x00','_':'\x1f'};
-    const k = key.length===1 ? key.toLowerCase() : null;
-    if (ctrl && k && map[k]) seq = map[k];
-    else seq = key;
-  } else {
-    const seqs = {Escape:'\x1b',Tab:'\t',Backspace:'\x7f',Delete:'\x1b[3~',Home:'\x1b[H',End:'\x1b[F',PageUp:'\x1b[5~',PageDown:'\x1b[6~',Insert:'\x1b[2~',Enter:'\r',ArrowUp:'\x1b[A',ArrowDown:'\x1b[B',ArrowLeft:'\x1b[D',ArrowRight:'\x1b[C',F1:'\x1bOP',F2:'\x1bOQ',F3:'\x1bOR',F4:'\x1bOS',F5:'\x1b[15~',F6:'\x1b[17~',F7:'\x1b[18~',F8:'\x1b[19~',F9:'\x1b[20~',F10:'\x1b[21~',F11:'\x1b[23~',F12:'\x1b[24~'};
-    seq = seqs[key] || key;
-  }
-  wsSend({action:'input', data:seq, target:deviceId});
-}
-
-/* ================================================
-   FILE MANAGER
-   ================================================ */
-function toggleFilePanel() {
-  if (!deviceId) { toast('No device connected', 'warn'); return; }
-  const fp = $('filepanel');
-  fp.classList.toggle('open');
-  $('btnFm').classList.toggle('active');
-  if (fp.classList.contains('open')) fileList();
-}
-
-function fileList(path) {
-  if (!deviceId) { toast('No device', 'warn'); return; }
-  if (path === undefined) path = $('pathInput').value;
-  $('pathInput').value = path;
-  const id = 'r' + (++reqCounter);
-  pendingReq[id] = {type:'list'};
-  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Loading...</div>';
-  wsSend({action:'file_req', path, mode:'list', req_id:id, target:deviceId});
-}
-
-function fileFind() {
-  if (!deviceId) { toast('No device', 'warn'); return; }
-  const path = $('pathInput').value;
-  const q = prompt('Find files (glob):', '*');
-  if (!q) return;
-  const id = 'r' + (++reqCounter);
-  pendingReq[id] = {type:'find'};
-  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Searching...</div>';
-  wsSend({action:'file_req', path, mode:'find', query:q, req_id:id, target:deviceId});
-}
-
-function fileRead(path) {
-  if (!deviceId) { toast('No device', 'warn'); return; }
-  const id = 'r' + (++reqCounter);
-  pendingReq[id] = {type:'read', path};
-  $('fileList').innerHTML = '<div class="fp-loading"><div class="spinner-sm spinner"></div> Reading...</div>';
-  wsSend({action:'file_req', path, mode:'read', req_id:id, target:deviceId});
-}
-
-function fileNavigate(path) { fileList(path); }
-
-function handleResult(msg) {
-  const req = pendingReq[msg.req_id];
-  if (!req) return;
-  delete pendingReq[msg.req_id];
-  const d = msg.data;
-  if (d.success === false) {
-    $('fileList').innerHTML = '<div style="padding:16px;color:var(--red);text-align:center;font-size:12px"><i class="fas fa-circle-xmark"></i> ' + escHtml(d.error||'Error') + '</div>';
-    toast(d.error||'Error', 'error');
-    return;
-  }
-  if (req.type === 'list' || req.type === 'find') {
-    renderFiles(d.entries||[], d.path||'');
-  } else if (req.type === 'read') {
-    $('fileList').innerHTML = '';
-    currentFilePath = req.path;
-    $('modalTitle').textContent = 'Edit: ' + req.path;
-    $('modalTextarea').value = d.content || '';
-    $('modalSaveBtn').onclick = () => fileSave(currentFilePath);
-    $('modal-overlay').classList.add('show');
-  } else if (req.type === 'upload') {
-    toast(d.message || 'Saved', 'success');
-    setTimeout(fileList, 300);
-  }
-}
-
-function handleFileData(msg) {
-  const req = pendingReq[msg.req_id];
-  if (!req) return;
-  delete pendingReq[msg.req_id];
-  const d = msg.data;
-  const blob = new Blob([d.content], {type:'application/octet-stream'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = d.filename || 'download';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('Downloaded: ' + (d.filename||'file'), 'success');
-}
-
-function renderFiles(entries, path) {
-  const el = $('fileList');
-  if (!entries.length) {
-    el.innerHTML = '<div style="padding:16px;color:var(--text-dim);text-align:center"><i class="fas fa-folder-open" style="font-size:24px;opacity:.3;display:block;margin-bottom:8px"></i>Empty</div>';
-    return;
-  }
-  el.innerHTML = entries.map(f => {
-    const ico = f.type==='dir' ? 'fa-folder' : fileIcon(f.name);
-    const sz = f.type==='file' ? fmtSize(f.size) : '';
-    const p = escPath(path+'/'+f.name);
-    const oc = f.type==='dir' ? "fileNavigate('"+p+"')" : "fileRead('"+p+"')";
-    return '<div class="file-item '+f.type+'" onclick="'+oc+'"><i class="fas '+ico+'"></i><span class="fname">'+escHtml(f.name)+'</span><span class="fsize">'+sz+'</span></div>';
-  }).join('');
-}
-
-function showUploadModal() {
-  if (!deviceId) { toast('No device', 'warn'); return; }
-  const inp = document.createElement('input'); inp.type='file';
-  inp.onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    toast('Uploading ' + f.name + '...', 'info', 2000);
-    const r = new FileReader();
-    r.onload = ev => {
-      const id = 'r' + (++reqCounter);
-      pendingReq[id] = {type:'upload'};
-      wsSend({action:'file_upload', path:$('pathInput').value+'/'+f.name, content:ev.target.result, req_id:id, target:deviceId});
-    };
-    r.readAsText(f);
-  };
-  inp.click();
-}
-
-function showCreateModal() {
-  if (!deviceId) { toast('No device', 'warn'); return; }
-  currentFilePath = null;
-  $('modalTitle').textContent = 'Create File';
-  $('modalTextarea').value = '';
-  $('modalSaveBtn').onclick = createFile;
-  $('modal-overlay').classList.add('show');
-}
-
-function createFile() {
-  const name = prompt('File name:'); if (!name) return;
-  const path = $('pathInput').value + '/' + name;
-  const content = $('modalTextarea').value;
-  const id = 'r' + (++reqCounter);
-  pendingReq[id] = {type:'upload'};
-  wsSend({action:'file_upload', path, content, req_id:id, target:deviceId});
-  toast('Creating...', 'info', 1500);
-  closeModal();
-}
-
-function fileSave(path) {
-  const id = 'r' + (++reqCounter);
-  pendingReq[id] = {type:'upload'};
-  wsSend({action:'file_upload', path, content:$('modalTextarea').value, req_id:id, target:deviceId});
-  toast('Saving...', 'info', 1500);
-  closeModal();
-}
-
-function closeModal() { $('modal-overlay').classList.remove('show'); }
-
-/* ================================================
-   HELPERS
-   ================================================ */
-function fileIcon(n) {
-  const ext = n.split('.').pop().toLowerCase();
-  const m = {py:'fa-file-code',js:'fa-file-code',html:'fa-file-code',css:'fa-file-code',json:'fa-file-code',sh:'fa-file-code',ts:'fa-file-code',txt:'fa-file-lines',md:'fa-file-lines',log:'fa-file-lines',jpg:'fa-file-image',png:'fa-file-image',gif:'fa-file-image',svg:'fa-file-image',zip:'fa-file-zipper',tar:'fa-file-zipper',gz:'fa-file-zipper',mp3:'fa-file-audio',mp4:'fa-file-video',pdf:'fa-file-pdf'};
-  return m[ext] || 'fa-file';
-}
-function fmtSize(b) { return b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
-function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function escPath(p) { return p.replace(/'/g, "\\'"); }
-
-/* ================================================
-   INIT
-   ================================================ */
-window.addEventListener('DOMContentLoaded', () => {
-  initTerminal();
-
-  const params = new URLSearchParams(location.search);
-  if (params.get('token')) {
-    authToken = params.get('token');
-    $('tokenInput').value = authToken;
-  }
-
-  $('tokenInput').addEventListener('keydown', e => { if (e.key==='Enter') doConnect(); });
-
-  // Tab visibility: reconnect if ws dropped while tab was hidden
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !wsReady && userInitiated) {
-      clearTimeout(reconnectTimer);
+  try{
+    const r=await fetch('/api/health');
+    const j=await r.json();
+    if(j.status==='ok'){
+      ss('s1','ok','Server OK (port:'+j.port+', devices:'+j.devices+')');
+      // Proceed to WebSocket
       openWS();
+    }else{
+      ss('s1','fail','Server returned error');
+      sDot('','Server error');sBtn('Retry','fa-rotate');
+      toast('Server health check failed','err');
     }
-  });
+  }catch(e){
+    ss('s1','fail','Fetch failed: '+e.message);
+    sDot('','Unreachable');sBtn('Retry','fa-rotate');
+    toast('Cannot reach server: '+e.message,'err',6000);
+  }
+}
+
+/* ===== VIRTUAL KEYBOARD ===== */
+function togKB(){$('kb').classList.toggle('show');$('bKb').classList.toggle('on');if($('kb').classList.contains('show'))setTimeout(fit,80)}
+function togM(m,el){mods[m]=!mods[m];el.classList.toggle('on',mods[m])}
+function sKey(key){
+  if(!wsOk||!devId){toast('No device','warn',1500);return}
+  const c=mods.ctrl,a=mods.alt;mods.ctrl=mods.alt=false;
+  document.querySelectorAll('.k[data-m]').forEach(e=>e.classList.remove('on'));
+  let s='';
+  if(c||a){const m={a:'\x01',b:'\x02',c:'\x03',d:'\x04',e:'\x05',f:'\x06',g:'\x07',h:'\x08',i:'\x09',j:'\x0a',k:'\x0b',l:'\x0c',m:'\x0d',n:'\x0e',o:'\x0f',p:'\x10',q:'\x11',r:'\x12',s:'\x13',t:'\x14',u:'\x15',v:'\x16',w:'\x17',x:'\x18',y:'\x19',z:'\x1a','[':'\x1b',']':'\x1d','\\':'\x1c','/':'\x1f',' ':'\x00','_':'\x1f'};const k=key.length===1?key.toLowerCase():null;if(c&&k&&m[k])s=m[k];else s=key}
+  else{const q={Escape:'\x1b',Tab:'\t',Backspace:'\x7f',Delete:'\x1b[3~',Home:'\x1b[H',End:'\x1b[F',PageUp:'\x1b[5~',PageDown:'\x1b[6~',Insert:'\x1b[2~',Enter:'\r',ArrowUp:'\x1b[A',ArrowDown:'\x1b[B',ArrowLeft:'\x1b[D',ArrowRight:'\x1b[C',F1:'\x1bOP',F2:'\x1bOQ',F3:'\x1bOR',F4:'\x1bOS',F5:'\x1b[15~',F6:'\x1b[17~',F7:'\x1b[18~',F8:'\x1b[19~',F9:'\x1b[20~',F10:'\x1b[21~',F11:'\x1b[23~',F12:'\x1b[24~'};s=q[key]||key}
+  wsSend({action:'input',data:s,target:devId});
+}
+
+/* ===== FILE MANAGER ===== */
+function togFP(){if(!devId){toast('No device','warn');return}$('fp').classList.toggle('open');$('bFp').classList.toggle('on');if($('fp').classList.contains('open'))fpList()}
+function fpList(p){if(!devId){toast('No device','warn');return}if(p===undefined)p=$('fpPath').value;$('fpPath').value=p;const id='r'+(++rc);pend[id]={t:'list'};$('fpBody').innerHTML='<div class="fp-load"><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div> Loading...</div>';wsSend({action:'file_req',path:p,mode:'list',req_id:id,target:devId})}
+function fpFind(){if(!devId){toast('No device','warn');return}const p=$('fpPath').value,q=prompt('Glob:','*');if(!q)return;const id='r'+(++rc);pend[id]={t:'find'};$('fpBody').innerHTML='<div class="fp-load">Searching...</div>';wsSend({action:'file_req',path:p,mode:'find',query:q,req_id:id,target:devId})}
+function fpRead(p){if(!devId)return;const id='r'+(++rc);pend[id]={t:'read',p};$('fpBody').innerHTML='<div class="fp-load">Reading...</div>';wsSend({action:'file_req',path:p,mode:'read',req_id:id,target:devId})}
+function fpNav(p){fpList(p)}
+
+function handleRes(m){
+  const r=pend[m.req_id];if(!r)return;delete pend[m.req_id];const d=m.data;
+  if(d.success===false){$('fpBody').innerHTML='<div style="padding:14px;color:var(--rd);text-align:center;font-size:11px"><i class="fas fa-circle-xmark"></i> '+esc(d.error||'Error')+'</div>';toast(d.error||'Error','err');return}
+  if(r.t==='list'||r.t==='find'){renderF(d.entries||[],d.path||'')}
+  else if(r.t==='read'){$('fpBody').innerHTML='';curPath=r.p;$('mT').textContent='Edit: '+r.p;$('mTa').value=d.content||'';$('mSv').onclick=()=>fSave(curPath);$('modal-bg').classList.add('show')}
+  else if(r.t==='upload'){toast(d.message||'Saved','ok');setTimeout(fpList,300)}
+}
+function handleFD(m){const r=pend[m.req_id];if(!r)return;delete pend[m.req_id];const d=m.data;const b=new Blob([d.content],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d.filename||'f';a.click();URL.revokeObjectURL(a.href);toast('Downloaded','ok')}
+
+function renderF(entries,path){
+  const el=$('fpBody');if(!entries.length){el.innerHTML='<div style="padding:14px;color:var(--dim);text-align:center;font-size:11px">Empty</div>';return}
+  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fIcon(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fpNav('"+p+"')":"fpRead('"+p+"')";return'<div class="fi '+(f.type==='dir'?'dir':'')+'" onclick="'+o+'"><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('');
+}
+
+function fpUpload(){if(!devId){toast('No device','warn');return}const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(!f)return;toast('Uploading '+f.name+'...','info',2000);const r=new FileReader();r.onload=ev=>{const id='r'+(++rc);pend[id]={t:'upload'};wsSend({action:'file_upload',path:$('fpPath').value+'/'+f.name,content:ev.target.result,req_id:id,target:devId})};r.readAsText(f)};i.click()}
+function fpCreate(){if(!devId){toast('No device','warn');return}curPath=null;$('mT').textContent='Create File';$('mTa').value='';$('mSv').onclick=crFile;$('modal-bg').classList.add('show')}
+function crFile(){const n=prompt('Name:');if(!n)return;const p=$('fpPath').value+'/'+n;const id='r'+(++rc);pend[id]={t:'upload'};wsSend({action:'file_upload',path:p,content:$('mTa').value,req_id:id,target:devId});clMod()}
+function fSave(p){const id='r'+(++rc);pend[id]={t:'upload'};wsSend({action:'file_upload',path:p,content:$('mTa').value,req_id:id,target:devId});clMod();toast('Saving...','info',1500)}
+function clMod(){$('modal-bg').classList.remove('show')}
+
+/* ===== HELPERS ===== */
+function fIcon(n){const e=n.split('.').pop().toLowerCase();const m={py:'fa-file-code',js:'fa-file-code',html:'fa-file-code',css:'fa-file-code',json:'fa-file-code',sh:'fa-file-code',ts:'fa-file-code',txt:'fa-file-lines',md:'fa-file-lines',jpg:'fa-file-image',png:'fa-file-image',gif:'fa-file-image',svg:'fa-file-image',zip:'fa-file-zipper',tar:'fa-file-zipper',gz:'fa-file-zipper',mp3:'fa-file-audio',mp4:'fa-file-video',pdf:'fa-file-pdf'};return m[e]||'fa-file'}
+function fSz(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function escP(p){return p.replace(/'/g,"\\'")}
+
+/* ===== INIT ===== */
+window.addEventListener('DOMContentLoaded',()=>{
+  initTerm();
+  const p=new URLSearchParams(location.search);
+  if(p.get('token')){tk=p.get('token');$('tkIn').value=tk}
+  $('tkIn').addEventListener('keydown',e=>{if(e.key==='Enter')doConnect()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!wsOk&&userClick){clearTimeout(rTimer);openWS()}});
 });
 </script>
 </body>
