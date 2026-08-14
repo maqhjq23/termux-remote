@@ -455,7 +455,7 @@ function handleFD(m){
 
 function renderF(entries,path){
   const el=$('fpB');if(!entries.length){el.innerHTML='<div class="fp-l"><i class="fas fa-folder-open"></i> Empty directory</div>';return}
-  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fI(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fn('"+p+"')":"fr('"+p+"')";return'<div class="fi '+(f.type==='dir'?'dir':'')+"" onclick="+o+'><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('')
+  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fI(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fn('"+p+"')":"fr('"+p+"')";return '<div class="fi '+(f.type==='dir'?'dir':'')+'" onclick="'+o+'"><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('')
 }
 
 function fu(){if(!devId)return;const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(!f)return;toast('Uploading '+f.name,'info',2000);const r=new FileReader();r.onload=ev=>{const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+f.name,c:ev.target.result,rid:id})};r.readAsText(f)};i.click()}
