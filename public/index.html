@@ -7,88 +7,170 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d1117;--sf:#161b22;--sf2:#1c2128;--bd:#30363d;--tx:#e6edf3;--dm:#8b949e;--gn:#3fb950;--rd:#f85149;--yl:#d29922;--bl:#58a6ff}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Fira Code','Consolas',monospace;font-size:14px}
+:root{
+  --bg:#0a0e17;--bg2:#0f1520;--sf:#141c2b;--sf2:#1a2435;--sf3:#1e2a3d;
+  --bd:#1e2d42;--bd2:#2a3a52;--tx:#e2e8f0;--tx2:#94a3b8;--dm:#64748b;
+  --gn:#10b981;--gn2:#34d399;--rd:#ef4444;--yl:#f59e0b;--bl:#3b82f6;--cy:#06b6d4;
+  --purple:#a78bfa;--pink:#f472b6;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Inter','JetBrains Mono',sans-serif;font-size:14px}
+
+/* === ANIMATIONS === */
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse2{0%,100%{opacity:.3}50%{opacity:1}}
-@keyframes glow{0%,100%{box-shadow:0 0 4px var(--gn)}50%{box-shadow:0 0 14px var(--gn)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes toastSlide{from{transform:translateX(120%)}to{transform:translateX(0)}}
-.spinner{width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
-#toasts{position:fixed;top:40px;right:8px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{padding:8px 12px;border-radius:5px;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:6px;pointer-events:auto;animation:toastSlide .2s;box-shadow:0 3px 10px rgba(0,0,0,.5);max-width:340px}
-.toast.g{background:var(--sf2);border:1px solid var(--gn);color:var(--gn)}.toast.r{background:var(--sf2);border:1px solid var(--rd);color:var(--rd)}.toast.y{background:var(--sf2);border:1px solid var(--yl);color:var(--yl)}.toast.b{background:var(--sf2);border:1px solid var(--bl);color:var(--bl)}
-#bar{height:32px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
-#bar .l{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--rd);flex-shrink:0;transition:.3s}
-.dot.on{background:var(--gn);animation:glow 2s infinite}.dot.w{background:var(--yl);animation:pulse2 1s infinite}
-#bar .r{display:flex;gap:4px;flex-shrink:0}
-#bar button{background:var(--bd);border:none;color:var(--tx);padding:3px 7px;border-radius:3px;cursor:pointer;font-size:10px;font-family:inherit;display:flex;align-items:center;gap:3px;transition:.15s}
-#bar button:hover{background:#484f58}#bar button.on{background:var(--gn);color:#000}
-#lbl{font-size:11px;color:var(--dm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#wrap{display:flex;height:calc(100vh - 32px);position:relative}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(16,185,129,.3)}50%{box-shadow:0 0 20px rgba(16,185,129,.6),0 0 40px rgba(16,185,129,.15)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+@keyframes borderGlow{0%,100%{border-color:var(--bd)}50%{border-color:var(--gn)}}
+@keyframes scanline{0%{top:-100%}100%{top:200%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--dm)}
+
+/* === TOAST === */
+#toasts{position:fixed;top:48px;right:12px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 16px;border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:360px;backdrop-filter:blur(12px)}
+.toast.out{animation:slideOut .3s ease forwards}
+.toast.g{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--gn2)}
+.toast.r{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--rd)}
+.toast.y{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yl)}
+.toast.b{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--bl)}
+
+/* === TOP BAR === */
+#bar{height:40px;background:linear-gradient(180deg,var(--sf) 0%,var(--bg2) 100%);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;position:relative;z-index:10}
+#bar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gn),transparent);opacity:.3}
+#bar .l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--rd);flex-shrink:0;transition:all .4s ease}
+.dot.on{background:var(--gn);box-shadow:0 0 8px var(--gn);animation:glow 2s infinite}
+.dot.w{background:var(--yl);animation:pulse 1.2s infinite}
+.logo{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--gn),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px}
+.logo i{-webkit-text-fill-color:var(--gn);font-size:13px}
+#lbl{font-size:11px;color:var(--dm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+#bar .r{display:flex;gap:5px;flex-shrink:0}
+.tbtn{background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s ease}
+.tbtn:hover{background:var(--sf2);border-color:var(--bd2);color:var(--tx)}
+.tbtn.on{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--gn2)}
+
+/* === MAIN LAYOUT === */
+#wrap{display:flex;height:calc(100vh - 40px);position:relative;background:var(--bg)}
 #tw{flex:1;position:relative;overflow:hidden}
-#term{width:100%;height:100%;padding:2px 0}
+#term{width:100%;height:100%;padding:4px 0}
 .xterm{height:100%}
-.xterm-viewport::-webkit-scrollbar{width:5px}.xterm-viewport::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
-/* Overlay */
-#ov{position:absolute;inset:0;background:rgba(13,17,23,.97);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
-#ov.off{opacity:0;pointer-events:none}
-#ob{text-align:center;padding:24px;max-width:360px;width:92%;animation:fadeIn .4s}
-#ob .ic{font-size:40px;color:var(--gn);margin-bottom:12px}
-#ob h2{font-size:18px;margin-bottom:4px}
-#ob .sub{color:var(--dm);font-size:12px;margin-bottom:18px}
-.fg{margin-bottom:12px;text-align:left}
-.fg label{display:block;font-size:10px;color:var(--dm);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
-.fg input{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:8px 10px;border-radius:4px;font-family:inherit;font-size:12px;outline:none;transition:.2s}
-.fg input:focus{border-color:var(--gn)}
-.btn{padding:10px 24px;background:var(--gn);color:#000;border:none;border-radius:4px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s}
-.btn:hover{opacity:.85}.btn:disabled{opacity:.4;cursor:not-allowed}
-.st{text-align:left;margin-top:14px;font-size:11px;color:var(--dm);line-height:1.8}
-.st div{display:flex;align-items:center;gap:6px}
-.st i{width:14px;text-align:center;font-size:11px}
-.st .ok{color:var(--gn)}.st .fail{color:var(--rd)}.st .wait{color:var(--yl)}
-.hint{margin-top:14px;font-size:10px;color:var(--dm);line-height:1.6}
-.hint code{background:var(--bg);padding:1px 4px;border-radius:2px}
-/* File panel */
-#fp{position:absolute;right:0;top:0;bottom:0;width:300px;background:var(--sf);border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .2s;z-index:20;display:flex;flex-direction:column}
+.xterm-viewport::-webkit-scrollbar{width:5px}
+.xterm-viewport::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+
+/* === CONNECT OVERLAY === */
+#ov{position:absolute;inset:0;background:var(--bg);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease,visibility .4s ease}
+#ov.off{opacity:0;visibility:hidden;pointer-events:none}
+/* Grid background */
+#ov::before{content:'';position:absolute;inset:0;background-image:
+  radial-gradient(circle at 20% 50%,rgba(16,185,129,.06) 0%,transparent 50%),
+  radial-gradient(circle at 80% 20%,rgba(59,130,246,.06) 0%,transparent 50%),
+  radial-gradient(circle at 50% 80%,rgba(167,139,250,.04) 0%,transparent 50%);
+  pointer-events:none}
+#ov::after{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--bd) 1px,transparent 1px),linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:40px 40px;opacity:.15;pointer-events:none}
+
+#ob{text-align:center;padding:32px;max-width:420px;width:92%;animation:fadeUp .6s ease;position:relative;z-index:1}
+.ob-icon{width:72px;height:72px;margin:0 auto 20px;border-radius:18px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.1));border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gn);animation:float 3s ease-in-out infinite;position:relative}
+.ob-icon::after{content:'';position:absolute;inset:-4px;border-radius:22px;background:conic-gradient(from 0deg,transparent,var(--gn),transparent,var(--cy),transparent);opacity:.2;animation:spin 6s linear infinite;z-index:-1}
+#ob h2{font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-.5px}
+#ob h2 span{background:linear-gradient(135deg,var(--gn),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--dm);font-size:13px;margin-bottom:24px;line-height:1.5}
+
+.fg{margin-bottom:16px;text-align:left}
+.fg label{display:block;font-size:11px;color:var(--tx2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.fg input{width:100%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);padding:11px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:all .25s ease}
+.fg input:focus{border-color:var(--gn);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+
+.btn{padding:12px 28px;background:linear-gradient(135deg,var(--gn),#059669);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s ease;box-shadow:0 4px 12px rgba(16,185,129,.25);position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.35)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn .spinner-s{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+
+/* Status steps */
+.st{text-align:left;margin-top:20px;display:flex;flex-direction:column;gap:6px}
+.st-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:all .3s ease;background:var(--bg2);border:1px solid transparent}
+.st-item.ok{border-color:rgba(16,185,129,.2);color:var(--gn2)}
+.st-item.fail{border-color:rgba(239,68,68,.2);color:var(--rd)}
+.st-item.wait{border-color:rgba(245,158,11,.2);color:var(--yl)}
+.st-item i{width:16px;text-align:center;font-size:11px}
+
+.hint{margin-top:20px;font-size:11px;color:var(--dm);line-height:1.7}
+.hint code{background:var(--sf2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cy);border:1px solid var(--bd)}
+
+/* === FILE PANEL === */
+#fp{position:absolute;right:0;top:0;bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .25s ease;z-index:20;display:flex;flex-direction:column}
 #fp.open{transform:translateX(0)}
-#fp .hd{height:34px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;justify-content:space-between;flex-shrink:0}
-#fp .hd h3{font-size:12px}#fp .hd button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:14px}
-#fp .tb{height:32px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 6px;gap:4px;flex-shrink:0}
-#fp .tb input{flex:1;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:3px 6px;border-radius:3px;font-size:11px;font-family:inherit;outline:none;min-width:0}
+#fp .hd{height:40px;background:linear-gradient(180deg,var(--sf2),var(--sf));border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;justify-content:space-between;flex-shrink:0}
+#fp .hd h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+#fp .hd h3 i{color:var(--yl)}
+#fp .hd button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:16px;transition:color .2s}
+#fp .hd button:hover{color:var(--tx)}
+#fp .tb{height:38px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0}
+#fp .tb input{flex:1;background:var(--sf);border:1px solid var(--bd);color:var(--tx);padding:5px 8px;border-radius:5px;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;min-width:0;transition:border-color .2s}
 #fp .tb input:focus{border-color:var(--gn)}
-#fp .tb button{background:var(--bd);border:none;color:var(--tx);padding:2px 5px;border-radius:3px;cursor:pointer;font-size:10px}
-#fp .tb button:hover{background:#484f58}
-#fp .bd{flex:1;overflow-y:auto;padding:2px 0}
-.fi{display:flex;align-items:center;padding:5px 10px;cursor:pointer;transition:.1s;border-left:2px solid transparent}
-.fi:hover{background:rgba(255,255,255,.04)}
-.fi i{width:16px;text-align:center;margin-right:6px;font-size:12px}
-.fi .fn{flex:1;font-size:11px;word-break:break-all;min-width:0}
-.fi .fs{font-size:10px;color:var(--dm);margin-left:4px}
-.fp-l{display:flex;align-items:center;justify-content:center;padding:20px;color:var(--dm);gap:6px;font-size:11px}
-/* Modal */
-#mbg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;justify-content:center}
+.tbtn-s{background:var(--sf);border:1px solid var(--bd);color:var(--tx2);padding:4px 7px;border-radius:5px;cursor:pointer;font-size:11px;transition:all .15s}
+.tbtn-s:hover{background:var(--sf2);border-color:var(--bd2);color:var(--tx)}
+#fp .bd{flex:1;overflow-y:auto;padding:4px 0}
+.fi{display:flex;align-items:center;padding:7px 12px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;gap:8px}
+.fi:hover{background:rgba(255,255,255,.03);border-left-color:var(--gn)}
+.fi i{width:16px;text-align:center;font-size:12px;color:var(--dm);flex-shrink:0}
+.fi.dir i{color:var(--yl)}
+.fi .fn{flex:1;font-size:11px;font-family:'JetBrains Mono',monospace;word-break:break-all;min-width:0;color:var(--tx2)}
+.fi:hover .fn{color:var(--tx)}
+.fi .fs{font-size:10px;color:var(--dm);margin-left:4px;flex-shrink:0}
+.fp-l{display:flex;align-items:center;justify-content:center;padding:24px;color:var(--dm);gap:8px;font-size:12px}
+.fp-l .spinner-s{width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--gn);border-radius:50%;animation:spin .6s linear infinite}
+
+/* === MODAL === */
+#mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:50;display:none;align-items:center;justify-content:center}
 #mbg.show{display:flex}
-#mdl{background:var(--sf);border:1px solid var(--bd);border-radius:6px;width:90%;max-width:460px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column}
-#mdl .mh{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
-#mdl .mh h3{font-size:12px}#mdl .mh button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:16px}
-#mdl .mbo{padding:12px;flex:1;overflow-y:auto}
-#mdl textarea{width:100%;height:260px;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:6px;border-radius:3px;font-family:inherit;font-size:11px;resize:vertical;outline:none}
+#mdl{background:var(--sf);border:1px solid var(--bd);border-radius:12px;width:92%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.4);animation:fadeUp .3s ease}
+#mdl .mh{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+#mdl .mh h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+#mdl .mh button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:18px;transition:color .2s}
+#mdl .mh button:hover{color:var(--tx)}
+#mdl .mbo{padding:16px;flex:1;overflow-y:auto}
+#mdl textarea{width:100%;height:300px;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);padding:10px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;line-height:1.6;transition:border-color .2s}
 #mdl textarea:focus{border-color:var(--gn)}
-#mdl .mf{padding:10px 12px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:6px}
-#mdl .mf button{padding:5px 12px;border-radius:3px;border:none;cursor:pointer;font-family:inherit;font-size:11px}
-.bsv{background:var(--gn);color:#000}.bcl{background:var(--bd);color:var(--tx)}
-/* Keyboard */
-#kb{display:none;height:auto;max-height:36vh;background:var(--sf);border-top:1px solid var(--bd);flex-shrink:0;overflow-y:auto;padding:4px}
-#kb.show{display:block}
+#mdl .mf{padding:12px 16px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+.mbtn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;transition:all .15s}
+.mbtn-sv{background:var(--gn);color:#fff}.mbtn-sv:hover{background:#059669}
+.mbtn-cl{background:var(--sf2);color:var(--tx2);border:1px solid var(--bd)}.mbtn-cl:hover{background:var(--sf3);color:var(--tx)}
+
+/* === VIRTUAL KEYBOARD === */
+#kb{display:none;height:auto;max-height:38vh;background:var(--sf);border-top:1px solid var(--bd);flex-shrink:0;overflow-y:auto;padding:6px;scrollbar-width:thin}
+#kb.show{display:block;animation:fadeUp .2s ease}
 .kr{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
-.k{min-width:28px;height:32px;background:#21262d;border:1px solid var(--bd);border-radius:3px;color:var(--tx);font-size:10px;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.08s;padding:0 5px;flex-shrink:0}
-.k:active{background:var(--gn);color:#000;border-color:var(--gn);transform:scale(.93)}
-.k.s{background:#1c2128;color:var(--gn);font-weight:600;font-size:10px}.k.s.on{background:var(--gn);color:#000}
-.k.w{min-width:46px}.k.xw{min-width:68px}
-@media(max-width:600px){#fp{width:100%}.k{min-width:24px;height:28px;font-size:9px}.k.s{font-size:9px}}
+.k{min-width:30px;height:34px;background:var(--bg2);border:1px solid var(--bd);border-radius:5px;color:var(--tx2);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:all .1s;padding:0 6px;flex-shrink:0}
+.k:active{background:var(--gn);color:#fff;border-color:var(--gn);transform:scale(.92);box-shadow:0 2px 8px rgba(16,185,129,.3)}
+.k.s{background:var(--sf2);color:var(--cy);font-weight:600;font-size:10px;border-color:rgba(6,182,212,.2)}
+.k.s.on{background:rgba(6,182,212,.2);color:var(--cy);border-color:var(--cy);box-shadow:0 0 8px rgba(6,182,212,.2)}
+.k.w{min-width:48px}.k.xw{min-width:70px}
+
+/* === RESPONSIVE === */
+@media(max-width:600px){
+  #fp{width:100%}
+  .k{min-width:26px;height:30px;font-size:9px}
+  .k.s{font-size:9px}
+  #ob{padding:24px 20px}
+  #ob h2{font-size:20px}
+  .ob-icon{width:56px;height:56px;font-size:22px;border-radius:14px}
+}
+
+/* === SCANLINE EFFECT === */
+.scanline{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;opacity:.03}
+.scanline::before{content:'';position:absolute;left:0;right:0;height:30%;background:linear-gradient(180deg,transparent,rgba(16,185,129,.5),transparent);animation:scanline 4s linear infinite}
 </style>
 </head>
 <body>
@@ -96,27 +178,34 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 <div id="bar">
   <div class="l">
     <div class="dot" id="dot"></div>
-    <span style="font-size:12px;font-weight:600;color:var(--gn)"><i class="fas fa-terminal"></i> Termux</span>
+    <span class="logo"><i class="fas fa-terminal"></i> Termux</span>
     <span id="lbl">-</span>
   </div>
   <div class="r">
-    <button id="bK" onclick="togKB()"><i class="fas fa-keyboard"></i> Keys</button>
-    <button id="bF" onclick="togFP()"><i class="fas fa-folder"></i> Files</button>
-    <button onclick="fit()"><i class="fas fa-expand"></i></button>
+    <button class="tbtn" id="bK" onclick="togKB()"><i class="fas fa-keyboard"></i> Keys</button>
+    <button class="tbtn" id="bF" onclick="togFP()"><i class="fas fa-folder"></i> Files</button>
+    <button class="tbtn" onclick="fit()"><i class="fas fa-expand"></i></button>
   </div>
 </div>
 <div id="wrap">
   <div id="tw">
     <div id="term"></div>
+    <div class="scanline"></div>
     <div id="ov">
       <div id="ob">
-        <div class="ic"><i class="fas fa-satellite-dish"></i></div>
-        <h2>Termux Remote</h2>
-        <p class="sub">Real-time terminal from browser</p>
-        <div class="fg"><label>Auth Token</label><input type="text" id="tkI" value="termux-remote-2024"></div>
-        <button class="btn" id="cB" onclick="go()"><i class="fas fa-plug"></i> <span id="cT">Connect</span></button>
+        <div class="ob-icon"><i class="fas fa-satellite-dish"></i></div>
+        <h2>Termux <span>Remote</span></h2>
+        <p class="sub">Control your Termux terminal from any browser</p>
+        <div class="fg">
+          <label>Auth Token</label>
+          <input type="text" id="tkI" value="termux-remote-2024" placeholder="Enter your token...">
+        </div>
+        <button class="btn" id="cB" onclick="go()">
+          <i class="fas fa-plug" id="cI"></i>
+          <span id="cT">Connect</span>
+        </button>
         <div class="st" id="st"></div>
-        <div class="hint" id="ht">Token = AUTH_TOKEN on Railway. Termux: <code>bash ~/start_remote.sh</code></div>
+        <div class="hint" id="ht">Token = AUTH_TOKEN env on Railway<br>Termux: <code>bash ~/start_remote.sh</code></div>
       </div>
     </div>
   </div>
@@ -124,11 +213,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
     <div class="hd"><h3><i class="fas fa-folder-open"></i> Files</h3><button onclick="togFP()"><i class="fas fa-times"></i></button></div>
     <div class="tb">
       <input id="fpP" value="~" placeholder="Path">
-      <button onclick="fl()"><i class="fas fa-sync-alt"></i></button>
-      <button onclick="ff()"><i class="fas fa-search"></i></button>
-      <button onclick="fn('..')"><i class="fas fa-level-up-alt"></i></button>
-      <button onclick="fu()"><i class="fas fa-upload"></i></button>
-      <button onclick="fc()"><i class="fas fa-plus"></i></button>
+      <button class="tbtn-s" onclick="fl()"><i class="fas fa-sync-alt"></i></button>
+      <button class="tbtn-s" onclick="ff()"><i class="fas fa-search"></i></button>
+      <button class="tbtn-s" onclick="fn('..')"><i class="fas fa-level-up-alt"></i></button>
+      <button class="tbtn-s" onclick="fu()"><i class="fas fa-upload"></i></button>
+      <button class="tbtn-s" onclick="fc()"><i class="fas fa-plus"></i></button>
     </div>
     <div class="bd" id="fpB"></div>
   </div>
@@ -143,7 +232,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
   </div>
   <div class="kr">
     <div class="k s" onclick="sk('F1')">F1</div><div class="k s" onclick="sk('F2')">F2</div><div class="k s" onclick="sk('F3')">F3</div><div class="k s" onclick="sk('F4')">F4</div>
-    <div class="k s" onclick="sk('F5')">F5</div><div class="k s" onclick="sk('F6')">F6</div><div class="k s" onclick="sk('F7')">F7</div><div class="k s" onclick="sk('F8')">F8</div><div class="k s" onclick="sk('F9')">F9</div><div class="k s" onclick="sk('F10')">F10</div>
+    <div class="k s" onclick="sk('F5')">F5</div><div class="k s" onclick="sk('F6')">F6</div><div class="k s" onclick="sk('F7')">F7</div><div class="k s" onclick="sk('F8')">F8</div>
+    <div class="k s" onclick="sk('F9')">F9</div><div class="k s" onclick="sk('F10')">F10</div>
   </div>
   <div class="kr">
     <div class="k s" onclick="sk('F11')">F11</div><div class="k s" onclick="sk('F12')">F12</div>
@@ -158,9 +248,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 </div>
 <div id="mbg" onclick="if(event.target===this)cm()">
   <div id="mdl">
-    <div class="mh"><h3 id="mT">Edit</h3><button onclick="cm()">&times;</button></div>
+    <div class="mh"><h3 id="mT"><i class="fas fa-code"></i> Edit</h3><button onclick="cm()">&times;</button></div>
     <div class="mbo"><textarea id="mTa"></textarea></div>
-    <div class="mf"><button class="bcl" onclick="cm()">Cancel</button><button class="bsv" id="mSv" onclick="ms()">Save</button></div>
+    <div class="mf"><button class="mbtn mbtn-cl" onclick="cm()">Cancel</button><button class="mbtn mbtn-sv" id="mSv" onclick="ms()">Save</button></div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
@@ -175,18 +265,31 @@ let rTmr=null,rCnt=0,pollTmr=null;
 const $=id=>document.getElementById(id);
 
 /* ===== TOAST ===== */
-function toast(m,t,b){const e=document.createElement('div');e.className='toast '+({ok:'g',err:'r',warn:'y',info:'b'}[t]||'b');e.innerHTML='<i class="fas fa-'+({ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation',info:'circle-info'}[t]||'circle-info')+'"></i>'+m;$('toasts').appendChild(e);if(b>0)setTimeout(()=>e.remove(),b)}
+function toast(m,t,b){
+  const e=document.createElement('div');
+  e.className='toast '+({ok:'g',err:'r',warn:'y',info:'b'}[t]||'b');
+  const icons={ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation',info:'circle-info'};
+  e.innerHTML='<i class="fas fa-'+(icons[t]||'circle-info')+'"></i><span>'+m+'</span>';
+  $('toasts').appendChild(e);
+  if(b>0)setTimeout(()=>{e.classList.add('out');setTimeout(()=>e.remove(),300)},b);
+}
 
 /* ===== STATUS ===== */
 function sS(c,t){$('dot').className='dot'+(c?' '+c:'');$('lbl').textContent=t}
-function sB(t,i,d){$('cT').textContent=t;$('cB').querySelector('i').className='fas '+i;$('cB').disabled=!!d}
+function sB(t,i,d){$('cT').textContent=t;$('cI').className='fas '+i;$('cB').disabled=!!d;if(d)$('cI').style.display='none';else $('cI').style.display=''}
 function sH(html){$('st').innerHTML=html}
+function sStep(n,cls,icon,txt){
+  const items=$('st').children;
+  if(items[n-1]){items[n-1].className='st-item '+cls;items[n-1].innerHTML='<i class="fas fa-'+icon+'"></i> '+txt}
+}
 
 /* ===== TERMINAL ===== */
 function initT(){
   term=new Terminal({
-    theme:{background:'#0d1117',foreground:'#e6edf3',cursor:'#3fb950',cursorAccent:'#0d1117',selectionBackground:'rgba(63,185,80,.3)',black:'#484f58',red:'#f85149',green:'#3fb950',yellow:'#d29922',blue:'#58a6ff',magenta:'#bc8cff',cyan:'#39c5cf',white:'#e6edf3',brightBlack:'#6e7681',brightRed:'#ff7b72',brightGreen:'#56d364',brightYellow:'#e3b341',brightBlue:'#79c0ff',brightMagenta:'#d2a8ff',brightCyan:'#56d4dd',brightWhite:'#fff'},
-    fontFamily:"'Fira Code','Consolas',monospace",fontSize:14,cursorBlink:true,cursorStyle:'block',scrollback:5000,allowProposedApi:true,allowTransparency:true
+    theme:{background:'#0a0e17',foreground:'#e2e8f0',cursor:'#10b981',cursorAccent:'#0a0e17',selectionBackground:'rgba(16,185,129,.25)',
+      black:'#1e293b',red:'#ef4444',green:'#10b981',yellow:'#f59e0b',blue:'#3b82f6',magenta:'#a78bfa',cyan:'#06b6d4',white:'#e2e8f0',
+      brightBlack:'#475569',brightRed:'#f87171',brightGreen:'#34d399',brightYellow:'#fbbf24',brightBlue:'#60a5fa',brightMagenta:'#c4b5fd',brightCyan:'#22d3ee',brightWhite:'#f8fafc'},
+    fontFamily:"'JetBrains Mono','Fira Code','Consolas',monospace",fontSize:14,cursorBlink:true,cursorStyle:'block',scrollback:5000,allowProposedApi:true,allowTransparency:true
   });
   fitA=new FitAddon.FitAddon();
   term.loadAddon(fitA);
@@ -195,7 +298,9 @@ function initT(){
   term.onData(d=>{if(alive&&devId)send({a:'i',to:devId,d})});
   term.onResize(({cols,rows})=>{if(alive&&devId)send({a:'r',to:devId,c:cols,rows})});
   window.addEventListener('resize',()=>{if(fitA)fitA.fit()});
-  term.writeln('\x1b[36m  Termux Remote Controller\x1b[0m\n');
+  term.writeln('\x1b[38;2;16;185;129m  ╔══════════════════════════════════════╗\x1b[0m');
+  term.writeln('\x1b[38;2;16;185;129m  ║\x1b[1m    Termux Remote Controller        \x1b[22m║\x1b[0m');
+  term.writeln('\x1b[38;2;16;185;129m  ╚══════════════════════════════════════╝\x1b[0m\n');
 }
 function fit(){if(fitA)setTimeout(()=>fitA.fit(),50)}
 
@@ -205,38 +310,47 @@ function send(d){if(!ws||ws.readyState!==1)return;ws.send(JSON.stringify(d))}
 function openWS(){
   if(ws)try{ws.close()}catch(e){}
   alive=false;hasDev=false;devId=null;
-
   const p=location.protocol==='https:'?'wss:':'ws:';
   const url=p+'//'+location.host+'/ws/b';
-  sS('w','Connecting...');sB('...','fa-circle-notch fa-spin',true);
-  sH('<div class="wait"><i class="fas fa-circle-dot"></i> Connecting to '+location.host+'...</div>');
+  sS('w','Connecting...');
+  sB('Connecting...','circle-notch fa-spin',true);
+  sH('<div class="st-item wait"><i class="fas fa-circle-dot fa-spin"></i> Connecting to '+location.host+'...</div>');
 
-  try{ws=new WebSocket(url)}catch(e){sS('','Error');sB('Retry','fa-rotate');sH('<div class="fail"><i class="fas fa-circle-xmark"></i> WebSocket error: '+e.message+'</div>');toast('WebSocket error','err',5000);schedR();return}
+  try{ws=new WebSocket(url)}catch(e){
+    sS('','Error');sB('Retry','fa-rotate');
+    sH('<div class="st-item fail"><i class="fas fa-circle-xmark"></i> WebSocket error: '+e.message+'</div>');
+    toast('WebSocket error','err',5000);schedR();return}
 
-  const ct=setTimeout(()=>{if(!alive){try{ws.close()}catch(e){}sS('','Timeout');sB('Retry','fa-rotate');sH('<div class="fail"><i class="fas fa-circle-xmark"></i> Connection timeout (8s)</div>');toast('Timeout','err');schedR()}},8000);
+  const ct=setTimeout(()=>{if(!alive){try{ws.close()}catch(e){}
+    sS('','Timeout');sB('Retry','fa-rotate');
+    sH('<div class="st-item wait"><i class="fas fa-check"></i> Server reachable</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> WebSocket timeout (10s)</div>');
+    toast('Connection timeout','err');schedR()}},10000);
 
   ws.onopen=()=>{
-    clearTimeout(ct);alive=true;rCnt=0;
-    startPoll();
-    sS('w','Server OK');sB('Searching...','fa-magnifying-glass',false);
-    sH('<div class="ok"><i class="fas fa-circle-check"></i> Connected to server</div><div class="wait" style="margin-top:4px"><i class="fas fa-circle-dot"></i> Looking for Termux device...</div>');
+    clearTimeout(ct);alive=true;rCnt=0;startPoll();
+    sS('w','Connected');sB('Searching device...','fa-magnifying-glass',false);
+    sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div><div class="st-item wait"><i class="fas fa-circle-dot fa-spin"></i> Waiting for Termux device...</div>');
   };
 
-  ws.onmessage=e=>{
-    try{onMsg(JSON.parse(e.data))}catch(er){console.error(er)}
-  };
+  ws.onmessage=e=>{try{onMsg(JSON.parse(e.data))}catch(er){console.error(er)}};
 
-  ws.onclose=()=>{
+  ws.onclose=ev=>{
     clearTimeout(ct);stopPoll();alive=false;
     if(hasDev){
       devId=null;hasDev=false;startPoll();
       sS('w','Reconnecting...');
       $('ov').classList.remove('off');
-      sH('<div class="ok"><i class="fas fa-circle-check"></i> Server OK</div><div class="fail" style="margin-top:4px"><i class="fas fa-circle-xmark"></i> Device disconnected</div>');
+      sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> Device disconnected</div>');
       toast('Device lost','warn',3000);
       if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
-    } else {
-      sS('w','Reconnecting...');
+    }else{
+      sS('','Reconnecting...');
+      sB('Reconnecting...','fa-circle-notch fa-spin',true);
+      const code=ev.code||0;
+      let reason='Unknown';
+      if(code===1000)reason='Normal closure';
+      else if(code===1006)reason='Abnormal (proxy/network)';
+      sH('<div class="st-item wait"><i class="fas fa-check"></i> Server reachable</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> Disconnected (code: '+code+') '+reason+'</div>');
     }
     schedR();
   };
@@ -250,46 +364,35 @@ function startPoll(){stopPoll();pollTmr=setInterval(()=>{if(alive&&!devId)send({
 function stopPoll(){clearInterval(pollTmr);pollTmr=null}
 
 function schedR(){
-  stopPoll();
-  rCnt++;
-  const d=Math.min(2000+rCnt*800,8000);
-  sS('','Retry '+Math.ceil(d/1000)+'s');sB('Retry','fa-circle-notch fa-spin',true);
-  clearTimeout(rTmr);
-  rTmr=setTimeout(openWS,d);
+  stopPoll();rCnt++;
+  const d=Math.min(2000+rCnt*1000,10000);
+  sS('','Retry '+Math.ceil(d/1000)+'s');
+  sB('Retry '+Math.ceil(d/1000)+'s','fa-circle-notch fa-spin',true);
+  clearTimeout(rTmr);rTmr=setTimeout(openWS,d);
 }
 
 /* ===== MSG HANDLER ===== */
 function onMsg(m){
   switch(m.t){
-    case 'hi':
-      // got our client id, nothing special
-      break;
+    case 'hi':break;
     case 'devs':
       if(devId)return;
       if(m.list&&m.list.length>0){pickDev(m.list[0])}
       else if(alive){showWait()}
       break;
     case 'dev_up':
-      if(!devId)pickDev(m);
-      else toast('New device: '+m.name,'info',3000);
+      if(!devId)pickDev(m);else toast('New device: '+m.name,'info',3000);
       break;
     case 'dev_down':
-      if(m.id===devId){
-        devId=null;hasDev=false;startPoll();showWait();
+      if(m.id===devId){devId=null;hasDev=false;startPoll();showWait();
         $('ov').classList.remove('off');
         if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
-        toast('Device disconnected','warn');
-      }
+        toast('Device disconnected','warn')}
       break;
     case 'o':
-      if(m.src===devId&&term)term.write(m.d);
-      break;
-    case 'res':
-      handleRes(m);
-      break;
-    case 'fd':
-      handleFD(m);
-      break;
+      if(m.src===devId&&term)term.write(m.d);break;
+    case 'res':handleRes(m);break;
+    case 'fd':handleFD(m);break;
   }
 }
 
@@ -297,16 +400,16 @@ function pickDev(d){
   devId=d.id;hasDev=true;stopPoll();
   sS('on','Device: '+d.name);sB('Connected','fa-check',false);
   $('ov').classList.add('off');
-  toast('Connected: '+d.name,'ok');
-  if(term){term.writeln('\x1b[32m[OK] '+d.name+'\x1b[0m\n')}
+  toast('Connected to '+d.name,'ok');
+  if(term)term.writeln('\x1b[32m[OK] Connected: '+d.name+'\x1b[0m\n');
   setTimeout(()=>{if(term&&fitA){fitA.fit();send({a:'r',to:devId,c:term.cols,rows:term.rows})}},400);
 }
 
 function showWait(){
   sS('w','No device');sB('Waiting...','fa-magnifying-glass',false);
-  sH('<div class="ok"><i class="fas fa-circle-check"></i> Server connected</div>'
-    +'<div class="fail" style="margin-top:4px"><i class="fas fa-circle-xmark"></i> No Termux device found</div>'
-    +'<div class="hint" style="margin-top:8px">Run on Termux: <code>bash ~/start_remote.sh</code><br><span style=\'opacity:.6\'>Auto-detecting every 3s...</span></div>');
+  sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div>'
+    +'<div class="st-item fail"><i class="fas fa-circle-xmark"></i> No Termux device found</div>'
+    +'<div class="hint" style="margin-top:10px">Run on Termux: <code>bash ~/start_remote.sh</code><br><span style="opacity:.5">Auto-detecting every 3s...</span></div>');
 }
 
 /* ===== CONNECT ===== */
@@ -332,32 +435,32 @@ function sk(key){
 
 /* ===== FILES ===== */
 function togFP(){if(!devId){toast('No device','warn');return}$('fp').classList.toggle('open');$('bF').classList.toggle('on');if($('fp').classList.contains('open'))fl()}
-function fl(p){if(!devId)return;if(p===undefined)p=$('fpP').value;$('fpP').value=p;const id='r'+(++rc);pend[id]={t:'l'};$('fpB').innerHTML='<div class="fp-l"><div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div> Loading...</div>';send({a:'fr',to:devId,p,m:'list',rid:id})}
-function ff(){if(!devId)return;const p=$('fpP').value,q=prompt('Glob:','*');if(!q)return;const id='r'+(++rc);pend[id]={t:'f'};$('fpB').innerHTML='<div class="fp-l">Searching...</div>';send({a:'fr',to:devId,p,m:'find',q,rid:id})}
+function fl(p){if(!devId)return;if(p===undefined)p=$('fpP').value;$('fpP').value=p;const id='r'+(++rc);pend[id]={t:'l'};$('fpB').innerHTML='<div class="fp-l"><div class="spinner-s"></div> Loading...</div>';send({a:'fr',to:devId,p,m:'list',rid:id})}
+function ff(){if(!devId)return;const p=$('fpP').value,q=prompt('Glob pattern:','*');if(!q)return;const id='r'+(++rc);pend[id]={t:'f'};$('fpB').innerHTML='<div class="fp-l">Searching...</div>';send({a:'fr',to:devId,p,m:'find',q,rid:id})}
 function fr(p){if(!devId)return;const id='r'+(++rc);pend[id]={t:'r',p};$('fpB').innerHTML='<div class="fp-l">Reading...</div>';send({a:'fr',to:devId,p,m:'read',rid:id})}
 function fn(p){fl(p)}
 
 function handleRes(m){
   const r=pend[m.rid];if(!r)return;delete pend[m.rid];const d=m.d;
-  if(d.success===false){$('fpB').innerHTML='<div style="padding:12px;color:var(--rd);text-align:center;font-size:11px"><i class="fas fa-circle-xmark"></i> '+esc(d.error||'Error')+'</div>';toast(d.error||'Error','err');return}
+  if(d.success===false){$('fpB').innerHTML='<div style="padding:16px;color:var(--rd);text-align:center;font-size:12px"><i class="fas fa-circle-xmark"></i> '+esc(d.error||'Error')+'</div>';toast(d.error||'Error','err');return}
   if(r.t==='l'||r.t==='f'){renderF(d.entries||[],d.path||'')}
-  else if(r.t==='r'){$('fpB').innerHTML='';curPath=r.p;$('mT').textContent='Edit: '+r.p;$('mTa').value=d.content||'';$('mSv').onclick=()=>fSv(curPath);$('mbg').classList.add('show')}
+  else if(r.t==='r'){$('fpB').innerHTML='';curPath=r.p;$('mT').innerHTML='<i class="fas fa-code"></i> Edit: '+esc(r.p);$('mTa').value=d.content||'';$('mSv').onclick=()=>fSv(curPath);$('mbg').classList.add('show')}
   else if(r.t==='u'){toast(d.message||'Saved','ok');setTimeout(fl,300)}
 }
 
 function handleFD(m){
   const r=pend[m.rid];if(!r)return;delete pend[m.rid];const d=m.d;
-  const b=new Blob([d.content],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d.filename||'f';a.click();URL.revokeObjectURL(a.href);toast('Downloaded','ok')
+  const b=new Blob([d.content],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d.filename||'file';a.click();URL.revokeObjectURL(a.href);toast('Downloaded','ok')
 }
 
 function renderF(entries,path){
-  const el=$('fpB');if(!entries.length){el.innerHTML='<div style="padding:12px;color:var(--dm);text-align:center;font-size:11px">Empty</div>';return}
-  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fI(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fn('"+p+"')":"fr('"+p+"')";return'<div class="fi '+(f.type==='dir'?'dir':'')+'" onclick="+o+'><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('')
+  const el=$('fpB');if(!entries.length){el.innerHTML='<div class="fp-l"><i class="fas fa-folder-open"></i> Empty directory</div>';return}
+  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fI(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fn('"+p+"')":"fr('"+p+"')";return'<div class="fi '+(f.type==='dir'?'dir':'')+"" onclick="+o+'><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('')
 }
 
-function fU(){if(!devId)return;const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(!f)return;toast('Uploading '+f.name,'info',2000);const r=new FileReader();r.onload=ev=>{const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+f.name,c:ev.target.result,rid:id})};r.readAsText(f)};i.click()}
-function fCr(){if(!devId)return;curPath=null;$('mT').textContent='Create File';$('mTa').value='';$('mSv').onclick=fCr2;$('mbg').classList.add('show')}
-function fCr2(){const n=prompt('Name:');if(!n)return;const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+n,c:$('mTa').value,rid:id});cm();toast('Creating...','info',1500)}
+function fu(){if(!devId)return;const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(!f)return;toast('Uploading '+f.name,'info',2000);const r=new FileReader();r.onload=ev=>{const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+f.name,c:ev.target.result,rid:id})};r.readAsText(f)};i.click()}
+function fc(){if(!devId)return;curPath=null;$('mT').innerHTML='<i class="fas fa-plus"></i> Create File';$('mTa').value='';$('mSv').onclick=fCr2;$('mbg').classList.add('show')}
+function fCr2(){const n=prompt('File name:');if(!n)return;const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+n,c:$('mTa').value,rid:id});cm();toast('Creating file...','info',1500)}
 function fSv(p){const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p,c:$('mTa').value,rid:id});cm();toast('Saving...','info',1500)}
 function cm(){$('mbg').classList.remove('show')}
 
