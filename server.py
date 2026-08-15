@@ -1,211 +1,154 @@
 #!/usr/bin/env python3
-"""Termux Remote Controller - Server v8
-Starlette + Uvicorn (aiohttp WS broken on Railway Hikari proxy).
+"""
+Termux Remote v9 — Clean rebuild
+Starlette + uvicorn. Minimal relay: Browser ↔ Server ↔ Termux.
 """
 import os, sys, json, time, asyncio, traceback as tb
 from starlette.applications import Starlette
 from starlette.routing import Route, WebSocketRoute
 from starlette.responses import JSONResponse, FileResponse
 from starlette.websockets import WebSocket, WebSocketDisconnect
-from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
 PORT = int(os.environ.get("PORT", 2010))
 TOKEN = os.environ.get("AUTH_TOKEN", "termux-remote-2024")
 
-brokers = {}   # cid -> ws
-
-devices = {}   # cid -> ws
-
-dev_info = {}  # cid -> name
+device_ws = None   # single connected Termux device
+browser_ws = []   # all connected browsers
+device_name = ""
 
 def log(*a):
     print(f"[{time.strftime('%H:%M:%S')}]", *a, flush=True)
 
-# ---------- HTTP ----------
+# ── HTTP ──────────────────────────────────────────
 
-async def serve_index(request):
+async def index(req):
     fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "index.html")
     return FileResponse(fp)
 
-async def serve_health(request):
-    nd = sum(1 for w in devices.values())
-    return JSONResponse({"ok": True, "devices": nd})
+async def health(req):
+ return JSONResponse({"ok": True, "device": device_name or None})
 
-async def serve_debug(request):
-    return JSONResponse({
-        "ok": True,
-        "port": PORT,
-        "python": sys.version.split()[0],
-        "framework": "starlette+uvicorn",
-        "devices": len(devices),
-        "brokers": len(brokers),
-    })
+# ── Browser WebSocket ─────────────────────────────
 
-# ---------- Helpers ----------
-
-async def safe_send(ws, obj):
-    try:
-        await ws.send_json(obj)
-        return True
-    except:
-        return False
-
-async def broadcast_browsers(obj):
-    dead = []
-    for cid, ws in brokers.items():
-        if not await safe_send(ws, obj):
-            dead.append(cid)
-    for cid in dead:
-        brokers.pop(cid, None)
-
-def get_device_list():
-    return [{"id": c, "name": dev_info.get(c, "Termux")}
-           for c in devices]
-
-# ---------- Browser WebSocket ----------
-
-async def handle_browser(ws: WebSocket):
+async def ws_browser(ws: WebSocket):
+    global browser_ws
     await ws.accept()
-    log(f"browser WS accepted")
+    browser_ws.append(ws)
+    log(f"browser+ ({len(browser_ws)} total)")
 
-    cid = str(int(time.time() * 1000) % 1000000)
-    brokers[cid] = ws
-    log(f"browser-{cid} connected")
+    # Send current device status immediately
+    if device_ws and not device_ws[0].closed:
+        await ws.send_json({"t": "connected", "name": device_name})
+    else:
+        await ws.send_json({"t": "waiting"})
 
     try:
-        await safe_send(ws, {"t": "hi", "id": cid})
-        await safe_send(ws, {"t": "devs", "list": get_device_list()})
-
         while True:
-            data = await ws.receive_text()
-            try:
-                d = json.loads(data)
-            except:
-                continue
+            raw = await ws.receive_text()
+            msg = json.loads(raw)
+            kind = msg.get("t")
 
-            kind = d.get("a")
+            # Forward input to Termux
+            if kind == "i" and device_ws and not device_ws[0].closed:
+                await device_ws[0].send_json(msg)
 
-            if kind == "ls":
-                await safe_send(ws, {"t": "devs", "list": get_device_list()})
+            # Forward resize to Termux
+            elif kind == "r" and device_ws and not device_ws[0].closed:
+                await device_ws[0].send_json(msg)
 
-            elif kind == "i":
-                target = d.get("to")
-                if target in devices:
-                    await safe_send(devices[target], {"t": "i", "d": d.get("d", "")})
-
-            elif kind == "r":
-                target = d.get("to")
-                if target in devices:
-                    await safe_send(devices[target], {"t": "r", "c": d.get("c", 80), "rows": d.get("rows", 24)})
-
-            elif kind == "fr":
-                target = d.get("to")
-                if target in devices:
-                    await safe_send(devices[target], {"t": "fr", "p": d.get("p", "."), "m": d.get("m", "list"), "q": d.get("q", "*"), "rid": d.get("rid")})
-
-            elif kind == "fu":
-                target = d.get("to")
-                if target in devices:
-                    await safe_send(devices[target], {"t": "fu", "p": d.get("p", ""), "c": d.get("c", ""), "rid": d.get("rid")})
-
-            elif kind == "fd":
-                target = d.get("to")
-                if target in devices:
-                    await safe_send(devices[target], {"t": "fd", "p": d.get("p", ""), "rid": d.get("rid")})
+            # File operations
+            elif kind in ("fr", "fu", "fd") and device_ws and not device_ws[0].closed:
+                await device_ws[0].send_json(msg)
 
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        log(f"browser-{cid} error: {e}")
-        log(tb.format_exc())
+        log(f"browser error: {e}")
     finally:
-        brokers.pop(cid, None)
-        log(f"browser-{cid} disconnected")
+        if ws in browser_ws:
+            browser_ws.remove(ws)
+        log(f"browser- ({len(browser_ws)} total)")
 
-# ---------- Termux WebSocket ----------
+# ── Termux WebSocket ──────────────────────────────
 
-async def handle_termux(ws: WebSocket):
+async def ws_termux(ws: WebSocket):
+    global device_ws, device_name
     await ws.accept()
-    log(f"termux WS accepted")
 
+    # Auth
     token = ws.query_params.get("token", "")
     if token != TOKEN:
-        log("termux auth rejected")
-        await safe_send(ws, {"t": "err", "msg": "bad token"})
+        log("termux auth FAILED")
+        await ws.send_json({"t": "err", "msg": "bad token"})
         await ws.close()
         return
 
-    cid = str(int(time.time() * 1000) % 1000000)
-    name = ws.query_params.get("device", "Termux")
-    devices[cid] = ws
-    dev_info[cid] = name
-    log(f"termux-{cid} connected ({name})")
+    device_ws = [ws]
+    device_name = ws.query_params.get("device", "Termux")
+    log(f"termux connected: {device_name}")
+
+    # Notify all browsers
+    for bws in browser_ws:
+        if not bws.closed:
+            try:
+                await bws.send_json({"t": "connected", "name": device_name})
+            except:
+                pass
 
     try:
-        await safe_send(ws, {"t": "hi", "id": cid})
-        await broadcast_browsers({"t": "dev_up", "id": cid, "name": name})
+        async for raw in ws:
+            msg = json.loads(raw)
+            kind = msg.get("t")
 
-        while True:
-            data = await ws.receive_text()
-            try:
-                d = json.loads(data)
-            except:
-                continue
-
-            kind = d.get("t")
-
+            # Broadcast terminal output + file results to all browsers
             if kind in ("o", "res", "fd"):
-                await broadcast_browsers({"t": kind, "d": d.get("d", {}), "src": cid, "rid": d.get("rid")})
+                dead = []
+                for bws in browser_ws:
+                    if bws.closed:
+                        dead.append(bws)
+                        continue
+                    try:
+                        await bws.send_json(msg)
+                    except:
+                        dead.append(bws)
+                for d in dead:
+                    if d in browser_ws:
+                        browser_ws.remove(d)
 
             elif kind == "ping":
-                await safe_send(ws, {"t": "pong"})
+                await ws.send_json({"t": "pong"})
 
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        log(f"termux-{cid} error: {e}")
-        log(tb.format_exc())
+        log(f"termux error: {e}")
     finally:
-        devices.pop(cid, None)
-        dev_info.pop(cid, None)
-        log(f"termux-{cid} disconnected")
-        await broadcast_browsers({"t": "dev_down", "id": cid})
+        device_ws = None
+        device_name = ""
+        log("termux disconnected")
+        # Notify browsers
+        for bws in browser_ws:
+            if not bws.closed:
+                try:
+                    await bws.send_json({"t": "disconnected"})
+                except:
+                    pass
 
-# ---------- Test WS ----------
-
-async def handle_test(ws: WebSocket):
-    await ws.accept()
-    log("test WS connected")
-    try:
-        await ws.send_json({"ok": True, "msg": "ws works"})
-        while True:
-            data = await ws.receive_text()
-            await ws.send_json({"echo": data})
-    except WebSocketDisconnect:
-        pass
-    finally:
-        log("test WS disconnected")
-
-# ---------- App ----------
+# ── App ────────────────────────────────────────────
 
 routes = [
-    Route("/", serve_index),
-    Route("/api/health", serve_health),
-    Route("/api/debug", serve_debug),
-    WebSocketRoute("/ws/test", handle_test),
-    WebSocketRoute("/ws/b", handle_browser),
-    WebSocketRoute("/ws/t", handle_termux),
+    Route("/", index),
+    Route("/api/health", health),
+    WebSocketRoute("/ws/b", ws_browser),
+    WebSocketRoute("/ws/t", ws_termux),
 ]
 
 app = Starlette(routes=routes)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.on_event("startup")
-async def on_startup():
-    log(f"=== SERVER STARTED port={PORT} token={TOKEN} ===")
-    log(f"Framework: starlette + uvicorn")
+async def _start():
+    log(f"v9 ready port={PORT}")
 
 if __name__ == "__main__":
-    log(f"Booting on port {PORT}...")
     uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="warning")

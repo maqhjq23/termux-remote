@@ -7,219 +7,101 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0a0e17;--bg2:#0f1520;--sf:#141c2b;--sf2:#1a2435;--sf3:#1e2a3d;
-  --bd:#1e2d42;--bd2:#2a3a52;--tx:#e2e8f0;--tx2:#94a3b8;--dm:#64748b;
-  --gn:#10b981;--gn2:#34d399;--rd:#ef4444;--yl:#f59e0b;--bl:#3b82f6;--cy:#06b6d4;
-  --purple:#a78bfa;--pink:#f472b6;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Inter','JetBrains Mono',sans-serif;font-size:14px}
-
-/* === ANIMATIONS === */
+:root{--bg:#0b0f19;--bg2:#111827;--card:#1a2332;--border:#1e3048;--text:#e2e8f0;--text2:#94a3b8;--dim:#475569;--green:#10b981;--green2:#34d399;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--cyan:#06b6d4}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(16,185,129,.3)}50%{box-shadow:0 0 20px rgba(16,185,129,.6),0 0 40px rgba(16,185,129,.15)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
-@keyframes borderGlow{0%,100%{border-color:var(--bd)}50%{border-color:var(--gn)}}
-@keyframes scanline{0%{top:-100%}100%{top:200%}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{transform:translateX(110%)}to{transform:translateX(0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 6px var(--green)}50%{box-shadow:0 0 18px var(--green)}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-/* === SCROLLBAR === */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:var(--bg2)}
-::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--dm)}
+#toasts{position:fixed;top:44px;right:8px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:8px 14px;border-radius:6px;font-size:11px;display:flex;align-items:center;gap:6px;pointer-events:auto;animation:slideR .25s ease;box-shadow:0 6px 20px rgba(0,0,0,.4);backdrop-filter:blur(8px);max-width:340px}
+.toast.g{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green2)}
+.toast.r{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.toast.y{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--yellow)}
+.toast.b{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--blue)}
+.toast.out{animation:slideR .2s ease reverse forwards}
 
-/* === TOAST === */
-#toasts{position:fixed;top:48px;right:12px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{padding:10px 16px;border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:360px;backdrop-filter:blur(12px)}
-.toast.out{animation:slideOut .3s ease forwards}
-.toast.g{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--gn2)}
-.toast.r{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--rd)}
-.toast.y{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yl)}
-.toast.b{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--bl)}
+#bar{height:36px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;transition:.3s}
+.dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:glow 2s infinite}
+.dot.w{background:var(--yellow);animation:pulse 1s infinite}
+.logo{font-size:13px;font-weight:700;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:5px}
+.logo i{-webkit-text-fill-color:var(--green);font-size:12px}
+#lbl{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.tbtn{background:var(--bg);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px;transition:.15s}
+.tbtn:hover{background:var(--card);color:var(--text)}
+.tbtn.on{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:var(--green2)}
 
-/* === TOP BAR === */
-#bar{height:40px;background:linear-gradient(180deg,var(--sf) 0%,var(--bg2) 100%);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;position:relative;z-index:10}
-#bar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gn),transparent);opacity:.3}
-#bar .l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--rd);flex-shrink:0;transition:all .4s ease}
-.dot.on{background:var(--gn);box-shadow:0 0 8px var(--gn);animation:glow 2s infinite}
-.dot.w{background:var(--yl);animation:pulse 1.2s infinite}
-.logo{font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--gn),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px}
-.logo i{-webkit-text-fill-color:var(--gn);font-size:13px}
-#lbl{font-size:11px;color:var(--dm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'JetBrains Mono',monospace}
-#bar .r{display:flex;gap:5px;flex-shrink:0}
-.tbtn{background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s ease}
-.tbtn:hover{background:var(--sf2);border-color:var(--bd2);color:var(--tx)}
-.tbtn.on{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--gn2)}
-
-/* === MAIN LAYOUT === */
-#wrap{display:flex;height:calc(100vh - 40px);position:relative;background:var(--bg)}
-#tw{flex:1;position:relative;overflow:hidden}
-#term{width:100%;height:100%;padding:4px 0}
+#wrap{height:calc(100vh - 36px);position:relative}
+#term{width:100%;height:100%;padding:2px 0}
 .xterm{height:100%}
-.xterm-viewport::-webkit-scrollbar{width:5px}
-.xterm-viewport::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+.xterm-viewport::-webkit-scrollbar{width:4px}
+.xterm-viewport::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-/* === CONNECT OVERLAY === */
-#ov{position:absolute;inset:0;background:var(--bg);z-index:30;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease,visibility .4s ease}
+#ov{position:absolute;inset:0;background:var(--bg);z-index:20;display:flex;align-items:center;justify-content:center;transition:opacity .3s,visibility .3s}
 #ov.off{opacity:0;visibility:hidden;pointer-events:none}
-/* Grid background */
-#ov::before{content:'';position:absolute;inset:0;background-image:
-  radial-gradient(circle at 20% 50%,rgba(16,185,129,.06) 0%,transparent 50%),
-  radial-gradient(circle at 80% 20%,rgba(59,130,246,.06) 0%,transparent 50%),
-  radial-gradient(circle at 50% 80%,rgba(167,139,250,.04) 0%,transparent 50%);
-  pointer-events:none}
-#ov::after{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--bd) 1px,transparent 1px),linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:40px 40px;opacity:.15;pointer-events:none}
+#ov::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(16,185,129,.05) 0%,transparent 70%);pointer-events:none}
 
-#ob{text-align:center;padding:32px;max-width:420px;width:92%;animation:fadeUp .6s ease;position:relative;z-index:1}
-.ob-icon{width:72px;height:72px;margin:0 auto 20px;border-radius:18px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.1));border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gn);animation:float 3s ease-in-out infinite;position:relative}
-.ob-icon::after{content:'';position:absolute;inset:-4px;border-radius:22px;background:conic-gradient(from 0deg,transparent,var(--gn),transparent,var(--cy),transparent);opacity:.2;animation:spin 6s linear infinite;z-index:-1}
-#ob h2{font-size:24px;font-weight:700;margin-bottom:4px;letter-spacing:-.5px}
-#ob h2 span{background:linear-gradient(135deg,var(--gn),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{color:var(--dm);font-size:13px;margin-bottom:24px;line-height:1.5}
-
-.fg{margin-bottom:16px;text-align:left}
-.fg label{display:block;font-size:11px;color:var(--tx2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
-.fg input{width:100%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);padding:11px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:all .25s ease}
-.fg input:focus{border-color:var(--gn);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
-
-.btn{padding:12px 28px;background:linear-gradient(135deg,var(--gn),#059669);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s ease;box-shadow:0 4px 12px rgba(16,185,129,.25);position:relative;overflow:hidden}
-.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.35)}
-.btn:active{transform:translateY(0)}
+#panel{text-align:center;padding:28px;max-width:380px;width:90%;animation:fadeUp .5s ease;position:relative;z-index:1}
+.p-icon{width:60px;height:60px;margin:0 auto 16px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(6,182,212,.08));border:1px solid rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--green)}
+#panel h2{font-size:20px;font-weight:700;margin-bottom:3px;letter-spacing:-.3px}
+#panel h2 span{background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--dim);font-size:12px;margin-bottom:20px}
+.fg{margin-bottom:14px;text-align:left}
+.fg label{display:block;font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.fg input{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border .2s}
+.fg input:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(16,185,129,.1)}
+.btn{padding:10px 24px;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s;box-shadow:0 4px 12px rgba(16,185,129,.2)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,185,129,.3)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn .spinner-s{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 
-/* Status steps */
-.st{text-align:left;margin-top:20px;display:flex;flex-direction:column;gap:6px}
-.st-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:all .3s ease;background:var(--bg2);border:1px solid transparent}
-.st-item.ok{border-color:rgba(16,185,129,.2);color:var(--gn2)}
-.st-item.fail{border-color:rgba(239,68,68,.2);color:var(--rd)}
-.st-item.wait{border-color:rgba(245,158,11,.2);color:var(--yl)}
-.st-item i{width:16px;text-align:center;font-size:11px}
+.st{text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:4px}
+.si{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:4px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--bg2);border:1px solid transparent;transition:.2s}
+.si.ok{border-color:rgba(16,185,129,.2);color:var(--green2)}
+.si.fail{border-color:rgba(239,68,68,.2);color:var(--red)}
+.si.wait{border-color:rgba(245,158,11,.2);color:var(--yellow)}
+.si i{width:14px;text-align:center;font-size:10px}
+.hint{margin-top:16px;font-size:10px;color:var(--dim);line-height:1.6}
+.hint code{background:var(--card);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cyan);border:1px solid var(--border)}
 
-.hint{margin-top:20px;font-size:11px;color:var(--dm);line-height:1.7}
-.hint code{background:var(--sf2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cy);border:1px solid var(--bd)}
+#kb{display:none;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;overflow-y:auto;padding:4px}
+#kb.show{display:block}
+.kr{display:flex;justify-content:center;gap:2px;margin-bottom:2px}
+.k{min-width:28px;height:30px;background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:500;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:.08s;padding:0 4px;flex-shrink:0}
+.k:active{background:var(--green);color:#fff;border-color:var(--green);transform:scale(.9)}
+.k.s{background:var(--bg);color:var(--cyan);font-weight:600}
+.k.s.on{background:rgba(6,182,212,.15);border-color:var(--cyan)}
+.k.w{min-width:44px}.k.xw{min-width:64px}
 
-/* === FILE PANEL === */
-#fp{position:absolute;right:0;top:0;bottom:0;width:320px;background:var(--sf);border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .25s ease;z-index:20;display:flex;flex-direction:column}
-#fp.open{transform:translateX(0)}
-#fp .hd{height:40px;background:linear-gradient(180deg,var(--sf2),var(--sf));border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;justify-content:space-between;flex-shrink:0}
-#fp .hd h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
-#fp .hd h3 i{color:var(--yl)}
-#fp .hd button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:16px;transition:color .2s}
-#fp .hd button:hover{color:var(--tx)}
-#fp .tb{height:38px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0}
-#fp .tb input{flex:1;background:var(--sf);border:1px solid var(--bd);color:var(--tx);padding:5px 8px;border-radius:5px;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;min-width:0;transition:border-color .2s}
-#fp .tb input:focus{border-color:var(--gn)}
-.tbtn-s{background:var(--sf);border:1px solid var(--bd);color:var(--tx2);padding:4px 7px;border-radius:5px;cursor:pointer;font-size:11px;transition:all .15s}
-.tbtn-s:hover{background:var(--sf2);border-color:var(--bd2);color:var(--tx)}
-#fp .bd{flex:1;overflow-y:auto;padding:4px 0}
-.fi{display:flex;align-items:center;padding:7px 12px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;gap:8px}
-.fi:hover{background:rgba(255,255,255,.03);border-left-color:var(--gn)}
-.fi i{width:16px;text-align:center;font-size:12px;color:var(--dm);flex-shrink:0}
-.fi.dir i{color:var(--yl)}
-.fi .fn{flex:1;font-size:11px;font-family:'JetBrains Mono',monospace;word-break:break-all;min-width:0;color:var(--tx2)}
-.fi:hover .fn{color:var(--tx)}
-.fi .fs{font-size:10px;color:var(--dm);margin-left:4px;flex-shrink:0}
-.fp-l{display:flex;align-items:center;justify-content:center;padding:24px;color:var(--dm);gap:8px;font-size:12px}
-.fp-l .spinner-s{width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--gn);border-radius:50%;animation:spin .6s linear infinite}
-
-/* === MODAL === */
-#mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:50;display:none;align-items:center;justify-content:center}
-#mbg.show{display:flex}
-#mdl{background:var(--sf);border:1px solid var(--bd);border-radius:12px;width:92%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 48px rgba(0,0,0,.4);animation:fadeUp .3s ease}
-#mdl .mh{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
-#mdl .mh h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
-#mdl .mh button{background:none;border:none;color:var(--dm);cursor:pointer;font-size:18px;transition:color .2s}
-#mdl .mh button:hover{color:var(--tx)}
-#mdl .mbo{padding:16px;flex:1;overflow-y:auto}
-#mdl textarea{width:100%;height:300px;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);padding:10px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;line-height:1.6;transition:border-color .2s}
-#mdl textarea:focus{border-color:var(--gn)}
-#mdl .mf{padding:12px 16px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
-.mbtn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;transition:all .15s}
-.mbtn-sv{background:var(--gn);color:#fff}.mbtn-sv:hover{background:#059669}
-.mbtn-cl{background:var(--sf2);color:var(--tx2);border:1px solid var(--bd)}.mbtn-cl:hover{background:var(--sf3);color:var(--tx)}
-
-/* === VIRTUAL KEYBOARD === */
-#kb{display:none;height:auto;max-height:38vh;background:var(--sf);border-top:1px solid var(--bd);flex-shrink:0;overflow-y:auto;padding:6px;scrollbar-width:thin}
-#kb.show{display:block;animation:fadeUp .2s ease}
-.kr{display:flex;justify-content:center;gap:3px;margin-bottom:3px}
-.k{min-width:30px;height:34px;background:var(--bg2);border:1px solid var(--bd);border-radius:5px;color:var(--tx2);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;transition:all .1s;padding:0 6px;flex-shrink:0}
-.k:active{background:var(--gn);color:#fff;border-color:var(--gn);transform:scale(.92);box-shadow:0 2px 8px rgba(16,185,129,.3)}
-.k.s{background:var(--sf2);color:var(--cy);font-weight:600;font-size:10px;border-color:rgba(6,182,212,.2)}
-.k.s.on{background:rgba(6,182,212,.2);color:var(--cy);border-color:var(--cy);box-shadow:0 0 8px rgba(6,182,212,.2)}
-.k.w{min-width:48px}.k.xw{min-width:70px}
-
-/* === RESPONSIVE === */
-@media(max-width:600px){
-  #fp{width:100%}
-  .k{min-width:26px;height:30px;font-size:9px}
-  .k.s{font-size:9px}
-  #ob{padding:24px 20px}
-  #ob h2{font-size:20px}
-  .ob-icon{width:56px;height:56px;font-size:22px;border-radius:14px}
-}
-
-/* === SCANLINE EFFECT === */
-.scanline{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;opacity:.03}
-.scanline::before{content:'';position:absolute;left:0;right:0;height:30%;background:linear-gradient(180deg,transparent,rgba(16,185,129,.5),transparent);animation:scanline 4s linear infinite}
+@media(max-width:600px){.k{min-width:24px;height:26px;font-size:8px}.k.s{font-size:8px}#panel{padding:20px}#panel h2{font-size:17px}.p-icon{width:48px;height:48px;font-size:20px}}
 </style>
 </head>
 <body>
 <div id="toasts"></div>
 <div id="bar">
-  <div class="l">
-    <div class="dot" id="dot"></div>
-    <span class="logo"><i class="fas fa-terminal"></i> Termux</span>
-    <span id="lbl">-</span>
-  </div>
-  <div class="r">
-    <button class="tbtn" id="bK" onclick="togKB()"><i class="fas fa-keyboard"></i> Keys</button>
-    <button class="tbtn" id="bF" onclick="togFP()"><i class="fas fa-folder"></i> Files</button>
-    <button class="tbtn" onclick="fit()"><i class="fas fa-expand"></i></button>
-  </div>
+  <div class="dot" id="dot"></div>
+  <span class="logo"><i class="fas fa-terminal"></i> Termux</span>
+  <span id="lbl">-</span>
+  <button class="tbtn" id="bK" onclick="togKB()"><i class="fas fa-keyboard"></i> Keys</button>
+  <button class="tbtn" onclick="fit()"><i class="fas fa-expand"></i></button>
 </div>
 <div id="wrap">
-  <div id="tw">
-    <div id="term"></div>
-    <div class="scanline"></div>
-    <div id="ov">
-      <div id="ob">
-        <div class="ob-icon"><i class="fas fa-satellite-dish"></i></div>
-        <h2>Termux <span>Remote</span></h2>
-        <p class="sub">Control your Termux terminal from any browser</p>
-        <div class="fg">
-          <label>Auth Token</label>
-          <input type="text" id="tkI" value="termux-remote-2024" placeholder="Enter your token...">
-        </div>
-        <button class="btn" id="cB" onclick="go()">
-          <i class="fas fa-plug" id="cI"></i>
-          <span id="cT">Connect</span>
-        </button>
-        <div class="st" id="st"></div>
-        <div class="hint" id="ht">Token = AUTH_TOKEN env on Railway<br>Termux: <code>bash ~/start_remote.sh</code></div>
-      </div>
+  <div id="term"></div>
+  <div id="ov">
+    <div id="panel">
+      <div class="p-icon"><i class="fas fa-satellite-dish"></i></div>
+      <h2>Termux <span>Remote</span></h2>
+      <p class="sub">Control your Termux from any browser</p>
+      <div class="fg"><label>Auth Token</label><input type="text" id="tkI" value="termux-remote-2024"></div>
+      <button class="btn" id="cB" onclick="go()"><i class="fas fa-plug" id="cI"></i> <span id="cT">Connect</span></button>
+      <div class="st" id="st"></div>
+      <div class="hint">Token = AUTH_TOKEN on Railway<br>Termux: <code>bash ~/start_remote.sh</code></div>
     </div>
-  </div>
-  <div id="fp">
-    <div class="hd"><h3><i class="fas fa-folder-open"></i> Files</h3><button onclick="togFP()"><i class="fas fa-times"></i></button></div>
-    <div class="tb">
-      <input id="fpP" value="~" placeholder="Path">
-      <button class="tbtn-s" onclick="fl()"><i class="fas fa-sync-alt"></i></button>
-      <button class="tbtn-s" onclick="ff()"><i class="fas fa-search"></i></button>
-      <button class="tbtn-s" onclick="fn('..')"><i class="fas fa-level-up-alt"></i></button>
-      <button class="tbtn-s" onclick="fu()"><i class="fas fa-upload"></i></button>
-      <button class="tbtn-s" onclick="fc()"><i class="fas fa-plus"></i></button>
-    </div>
-    <div class="bd" id="fpB"></div>
   </div>
 </div>
 <div id="kb">
@@ -241,242 +123,170 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
     <div class="k" onclick="sk('`')">`</div><div class="k" onclick="sk('~')">~</div><div class="k" onclick="sk('|')">|</div><div class="k" onclick="sk('\\')">\\</div>
   </div>
   <div class="kr">
-    <div class="k" onclick="sk('ArrowUp')"><i class="fas fa-arrow-up"></i></div><div class="k" onclick="sk('ArrowDown')"><i class="fas fa-arrow-down"></i></div>
-    <div class="k" onclick="sk('ArrowLeft')"><i class="fas fa-arrow-left"></i></div><div class="k" onclick="sk('ArrowRight')"><i class="fas fa-arrow-right"></i></div>
+    <div class="k" onclick="sk('ArrowUp')"><i class="fas fa-arrow-up"></i></div>
+    <div class="k" onclick="sk('ArrowDown')"><i class="fas fa-arrow-down"></i></div>
+    <div class="k" onclick="sk('ArrowLeft')"><i class="fas fa-arrow-left"></i></div>
+    <div class="k" onclick="sk('ArrowRight')"><i class="fas fa-arrow-right"></i></div>
     <div class="k xw s" onclick="sk('Enter')">Enter</div><div class="k w" onclick="sk(' ')">Space</div>
-  </div>
-</div>
-<div id="mbg" onclick="if(event.target===this)cm()">
-  <div id="mdl">
-    <div class="mh"><h3 id="mT"><i class="fas fa-code"></i> Edit</h3><button onclick="cm()">&times;</button></div>
-    <div class="mbo"><textarea id="mTa"></textarea></div>
-    <div class="mf"><button class="mbtn mbtn-cl" onclick="cm()">Cancel</button><button class="mbtn mbtn-sv" id="mSv" onclick="ms()">Save</button></div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xtermAddonFit.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xtermAddonWebLinks.min.js"></script>
 <script>
-/* ===== STATE ===== */
-let ws=null,term=null,fitA=null,devId=null,tk='termux-remote-2024';
-let mods={ctrl:0,alt:0},pend={},rc=0,curPath=null;
-let alive=false,hasDev=false;
-let rTmr=null,rCnt=0,pollTmr=null;
-const $=id=>document.getElementById(id);
+var ws=null,term=null,fitA=null,alive=false,hasDev=false,devName="";
+var mods={ctrl:0,alt:0},rTmr=null,rCnt=0;
+var $=function(id){return document.getElementById(id)};
 
-/* ===== TOAST ===== */
-function toast(m,t,b){
-  const e=document.createElement('div');
+function toast(m,t,dur){
+  var e=document.createElement('div');
   e.className='toast '+({ok:'g',err:'r',warn:'y',info:'b'}[t]||'b');
-  const icons={ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation',info:'circle-info'};
-  e.innerHTML='<i class="fas fa-'+(icons[t]||'circle-info')+'"></i><span>'+m+'</span>';
+  var ic={ok:'circle-check',err:'circle-xmark',warn:'triangle-exclamation',info:'circle-info'};
+  e.innerHTML='<i class="fas fa-'+(ic[t]||'circle-info')+'"></i><span>'+m+'</span>';
   $('toasts').appendChild(e);
-  if(b>0)setTimeout(()=>{e.classList.add('out');setTimeout(()=>e.remove(),300)},b);
+  if(dur){setTimeout(function(){e.classList.add('out');setTimeout(function(){e.remove()},250)},dur)}
 }
 
-/* ===== STATUS ===== */
-function sS(c,t){$('dot').className='dot'+(c?' '+c:'');$('lbl').textContent=t}
-function sB(t,i,d){$('cT').textContent=t;$('cI').className='fas '+i;$('cB').disabled=!!d;if(d)$('cI').style.display='none';else $('cI').style.display=''}
-function sH(html){$('st').innerHTML=html}
-function sStep(n,cls,icon,txt){
-  const items=$('st').children;
-  if(items[n-1]){items[n-1].className='st-item '+cls;items[n-1].innerHTML='<i class="fas fa-'+icon+'"></i> '+txt}
-}
+function sDot(c,t){$('dot').className='dot'+(c?' '+c:'');$('lbl').textContent=t}
+function sBtn(t,ic,dis){$('cT').textContent=t;$('cI').className='fas '+ic;$('cB').disabled=!!dis}
+function sStatus(html){$('st').innerHTML=html}
 
-/* ===== TERMINAL ===== */
-function initT(){
+function initTerm(){
   term=new Terminal({
-    theme:{background:'#0a0e17',foreground:'#e2e8f0',cursor:'#10b981',cursorAccent:'#0a0e17',selectionBackground:'rgba(16,185,129,.25)',
-      black:'#1e293b',red:'#ef4444',green:'#10b981',yellow:'#f59e0b',blue:'#3b82f6',magenta:'#a78bfa',cyan:'#06b6d4',white:'#e2e8f0',
-      brightBlack:'#475569',brightRed:'#f87171',brightGreen:'#34d399',brightYellow:'#fbbf24',brightBlue:'#60a5fa',brightMagenta:'#c4b5fd',brightCyan:'#22d3ee',brightWhite:'#f8fafc'},
-    fontFamily:"'JetBrains Mono','Fira Code','Consolas',monospace",fontSize:14,cursorBlink:true,cursorStyle:'block',scrollback:5000,allowProposedApi:true,allowTransparency:true
+    theme:{background:'#0b0f19',foreground:'#e2e8f0',cursor:'#10b981',cursorAccent:'#0b0f19',selectionBackground:'rgba(16,185,129,.2)',black:'#1e293b',red:'#ef4444',green:'#10b981',yellow:'#f59e0b',blue:'#3b82f6',magenta:'#a78bfa',cyan:'#06b6d4',white:'#e2e8f0',brightBlack:'#475569',brightRed:'#f87171',brightGreen:'#34d399',brightYellow:'#fbbf24',brightBlue:'#60a5fa',brightMagenta:'#c4b5fd',brightCyan:'#22d3ee',brightWhite:'#f8fafc'},
+    fontFamily:"'JetBrains Mono',monospace",fontSize:14,cursorBlink:true,cursorStyle:'block',scrollback:5000,allowProposedApi:true
   });
   fitA=new FitAddon.FitAddon();
   term.loadAddon(fitA);
   term.loadAddon(new WebLinksAddon.WebLinksAddon());
-  term.open($('term'));fitA.fit();
-  term.onData(d=>{if(alive&&devId)send({a:'i',to:devId,d})});
-  term.onResize(({cols,rows})=>{if(alive&&devId)send({a:'r',to:devId,c:cols,rows})});
-  window.addEventListener('resize',()=>{if(fitA)fitA.fit()});
-  term.writeln('\x1b[38;2;16;185;129m  ╔══════════════════════════════════════╗\x1b[0m');
-  term.writeln('\x1b[38;2;16;185;129m  ║\x1b[1m    Termux Remote Controller        \x1b[22m║\x1b[0m');
-  term.writeln('\x1b[38;2;16;185;129m  ╚══════════════════════════════════════╝\x1b[0m\n');
+  term.open($('term'));
+  fitA.fit();
+  term.onData(function(d){if(alive&&hasDev)ws.send(JSON.stringify({t:'i',d:d}))});
+  term.onResize(function(e){if(alive&&hasDev)ws.send(JSON.stringify({t:'r',c:e.cols,rows:e.rows}))});
+  window.addEventListener('resize',function(){if(fitA)fitA.fit()});
+  term.writeln('\x1b[38;2;16;185;129m  Termux Remote v9\x1b[0m\n');
 }
-function fit(){if(fitA)setTimeout(()=>fitA.fit(),50)}
 
-/* ===== WS ===== */
-function send(d){if(!ws||ws.readyState!==1)return;ws.send(JSON.stringify(d))}
-
-function openWS(){
+function doConnect(){
   if(ws)try{ws.close()}catch(e){}
-  alive=false;hasDev=false;devId=null;
-  const p=location.protocol==='https:'?'wss:':'ws:';
-  const url=p+'//'+location.host+'/ws/b';
-  sS('w','Connecting...');
-  sB('Connecting...','circle-notch fa-spin',true);
-  sH('<div class="st-item wait"><i class="fas fa-circle-dot fa-spin"></i> Connecting to '+location.host+'...</div>');
+  alive=false;hasDev=false;devName="";
+
+  var proto=location.protocol==='https:'?'wss:':'ws:';
+  var url=proto+'//'+location.host+'/ws/b';
+
+  sDot('w','Connecting...');
+  sBtn('Connecting...','circle-notch fa-spin',true);
+  sStatus('<div class="si wait"><i class="fas fa-circle-dot fa-spin"></i> Connecting to server...</div>');
 
   try{ws=new WebSocket(url)}catch(e){
-    sS('','Error');sB('Retry','fa-rotate');
-    sH('<div class="st-item fail"><i class="fas fa-circle-xmark"></i> WebSocket error: '+e.message+'</div>');
-    toast('WebSocket error','err',5000);schedR();return}
+    sStatus('<div class="si fail"><i class="fas fa-circle-xmark"></i> '+e.message+'</div>');
+    toast('WebSocket failed','err',5000);scheduleRetry();return;
+  }
 
-  const ct=setTimeout(()=>{if(!alive){try{ws.close()}catch(e){}
-    sS('','Timeout');sB('Retry','fa-rotate');
-    sH('<div class="st-item wait"><i class="fas fa-check"></i> Server reachable</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> WebSocket timeout (10s)</div>');
-    toast('Connection timeout','err');schedR()}},10000);
+  var timer=setTimeout(function(){
+    if(!alive){
+      try{ws.close()}catch(e){}
+      sDot('','Timeout');sBtn('Retry','fa-rotate');
+      sStatus('<div class="si fail"><i class="fas fa-circle-xmark"></i> Connection timeout</div>');
+      toast('Timeout','err');scheduleRetry();
+    }
+  },10000);
 
-  ws.onopen=()=>{
-    clearTimeout(ct);alive=true;rCnt=0;startPoll();
-    sS('w','Connected');sB('Searching device...','fa-magnifying-glass',false);
-    sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div><div class="st-item wait"><i class="fas fa-circle-dot fa-spin"></i> Waiting for Termux device...</div>');
+  ws.onopen=function(){
+    clearTimeout(timer);
+    alive=true;rCnt=0;
+    sDot('w','Server OK');
+    sBtn('Waiting for device...','fa-magnifying-glass',false);
+    sStatus('<div class="si ok"><i class="fas fa-check"></i> Server connected</div><div class="si wait"><i class="fas fa-circle-dot fa-spin"></i> Waiting for Termux device...</div>');
   };
 
-  ws.onmessage=e=>{try{onMsg(JSON.parse(e.data))}catch(er){console.error(er)}};
+  ws.onmessage=function(ev){
+    try{handleMsg(JSON.parse(ev.data))}catch(e){console.error(e)}
+  };
 
-  ws.onclose=ev=>{
-    clearTimeout(ct);stopPoll();alive=false;
+  ws.onclose=function(ev){
+    clearTimeout(timer);alive=false;
     if(hasDev){
-      devId=null;hasDev=false;startPoll();
-      sS('w','Reconnecting...');
+      hasDev=false;devName="";
+      sDot('w','Device lost');
       $('ov').classList.remove('off');
-      sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> Device disconnected</div>');
-      toast('Device lost','warn',3000);
+      sStatus('<div class="si ok"><i class="fas fa-check"></i> Server OK</div><div class="si fail"><i class="fas fa-circle-xmark"></i> Device disconnected</div>');
+      toast('Device disconnected','warn');
       if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
     }else{
-      sS('','Reconnecting...');
-      sB('Reconnecting...','fa-circle-notch fa-spin',true);
-      const code=ev.code||0;
-      let reason='Unknown';
-      if(code===1000)reason='Normal closure';
-      else if(code===1006)reason='Abnormal (proxy/network)';
-      sH('<div class="st-item wait"><i class="fas fa-check"></i> Server reachable</div><div class="st-item fail"><i class="fas fa-circle-xmark"></i> Disconnected (code: '+code+') '+reason+'</div>');
+      sDot('','Disconnected');
+      sStatus('<div class="si fail"><i class="fas fa-circle-xmark"></i> Disconnected (code '+ev.code+')</div>');
     }
-    schedR();
+    scheduleRetry();
   };
 
-  ws.onerror=()=>{};
+  ws.onerror=function(){};
 }
 
-function closeWS(){stopPoll();if(ws)try{ws.close()}catch(e){}ws=null;alive=false}
-
-function startPoll(){stopPoll();pollTmr=setInterval(()=>{if(alive&&!devId)send({a:'ls'})},3000)}
-function stopPoll(){clearInterval(pollTmr);pollTmr=null}
-
-function schedR(){
-  stopPoll();rCnt++;
-  const d=Math.min(2000+rCnt*1000,10000);
-  sS('','Retry '+Math.ceil(d/1000)+'s');
-  sB('Retry '+Math.ceil(d/1000)+'s','fa-circle-notch fa-spin',true);
-  clearTimeout(rTmr);rTmr=setTimeout(openWS,d);
-}
-
-/* ===== MSG HANDLER ===== */
-function onMsg(m){
-  switch(m.t){
-    case 'hi':break;
-    case 'devs':
-      if(devId)return;
-      if(m.list&&m.list.length>0){pickDev(m.list[0])}
-      else if(alive){showWait()}
-      break;
-    case 'dev_up':
-      if(!devId)pickDev(m);else toast('New device: '+m.name,'info',3000);
-      break;
-    case 'dev_down':
-      if(m.id===devId){devId=null;hasDev=false;startPoll();showWait();
-        $('ov').classList.remove('off');
-        if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
-        toast('Device disconnected','warn')}
-      break;
-    case 'o':
-      if(m.src===devId&&term)term.write(m.d);break;
-    case 'res':handleRes(m);break;
-    case 'fd':handleFD(m);break;
+function handleMsg(m){
+  if(m.t==='waiting'){
+    sDot('w','No device');sBtn('Waiting...','fa-magnifying-glass',false);
+    sStatus('<div class="si ok"><i class="fas fa-check"></i> Server connected</div><div class="si fail"><i class="fas fa-circle-xmark"></i> No Termux device</div><div class="hint" style="margin-top:8px">Run on Termux: <code>bash ~/start_remote.sh</code></div>');
+  }
+  else if(m.t==='connected'){
+    hasDev=true;devName=m.name||'Termux';
+    sDot('on',devName);sBtn('Connected','fa-check',false);
+    $('ov').classList.add('off');
+    toast('Connected: '+devName,'ok');
+    if(term){term.writeln('\x1b[32m[OK] '+devName+'\x1b[0m\n')}
+    setTimeout(function(){if(term&&fitA){fitA.fit();ws.send(JSON.stringify({t:'r',c:term.cols,rows:term.rows}))}},400);
+  }
+  else if(m.t==='disconnected'){
+    hasDev=false;devName="";
+    sDot('w','Device lost');
+    $('ov').classList.remove('off');
+    sStatus('<div class="si ok"><i class="fas fa-check"></i> Server OK</div><div class="si fail"><i class="fas fa-circle-xmark"></i> Device disconnected</div>');
+    toast('Device disconnected','warn');
+    if(term)term.writeln('\r\n\x1b[33m[!] Device disconnected\x1b[0m\r\n');
+  }
+  else if(m.t==='o' && term){
+    term.write(m.d);
+  }
+  else if(m.t==='res'){
+    if(m.d && m.d.success===false){toast(m.d.error||'Error','err')}
+    else if(m.d && m.d.success){toast('OK','ok',2000)}
+  }
+  else if(m.t==='fd'){
+    var d=m.d;if(!d)return;
+    var b=new Blob([atob(d.content)],{type:'application/octet-stream'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d.filename||'file';a.click();
+    URL.revokeObjectURL(a.href);toast('Downloaded','ok');
   }
 }
 
-function pickDev(d){
-  devId=d.id;hasDev=true;stopPoll();
-  sS('on','Device: '+d.name);sB('Connected','fa-check',false);
-  $('ov').classList.add('off');
-  toast('Connected to '+d.name,'ok');
-  if(term)term.writeln('\x1b[32m[OK] Connected: '+d.name+'\x1b[0m\n');
-  setTimeout(()=>{if(term&&fitA){fitA.fit();send({a:'r',to:devId,c:term.cols,rows:term.rows})}},400);
+function scheduleRetry(){
+  rCnt++;var d=Math.min(2000+rCnt*1000,10000);
+  sDot('','Retry '+Math.ceil(d/1000)+'s');
+  sBtn('Retry '+Math.ceil(d/1000)+'s','fa-circle-notch fa-spin',true);
+  clearTimeout(rTmr);
+  rTmr=setTimeout(doConnect,d);
 }
 
-function showWait(){
-  sS('w','No device');sB('Waiting...','fa-magnifying-glass',false);
-  sH('<div class="st-item ok"><i class="fas fa-check"></i> Server connected</div>'
-    +'<div class="st-item fail"><i class="fas fa-circle-xmark"></i> No Termux device found</div>'
-    +'<div class="hint" style="margin-top:10px">Run on Termux: <code>bash ~/start_remote.sh</code><br><span style="opacity:.5">Auto-detecting every 3s...</span></div>');
-}
+function go(){rCnt=0;clearTimeout(rTmr);doConnect()}
+function fit(){if(fitA)setTimeout(function(){fitA.fit()},50)}
 
-/* ===== CONNECT ===== */
-function go(){
-  tk=$('tkI').value.trim();
-  if(!tk){toast('Enter token','warn');return}
-  rCnt=0;clearTimeout(rTmr);
-  openWS();
-}
-
-/* ===== VIRTUAL KB ===== */
+/* Virtual KB */
 function togKB(){$('kb').classList.toggle('show');$('bK').classList.toggle('on');if($('kb').classList.contains('show'))setTimeout(fit,80)}
 function tm(m,el){mods[m]=!mods[m];el.classList.toggle('on',mods[m])}
 function sk(key){
-  if(!alive||!devId){toast('No device','warn',1500);return}
-  const c=mods.ctrl,a=mods.alt;mods.ctrl=mods.alt=false;
-  document.querySelectorAll('.k[data-m]').forEach(e=>e.classList.remove('on'));
-  let s='';
-  if(c||a){const m={a:'\x01',b:'\x02',c:'\x03',d:'\x04',e:'\x05',f:'\x06',g:'\x07',h:'\x08',i:'\x09',j:'\x0a',k:'\x0b',l:'\x0c',m:'\x0d',n:'\x0e',o:'\x0f',p:'\x10',q:'\x11',r:'\x12',s:'\x13',t:'\x14',u:'\x15',v:'\x16',w:'\x17',x:'\x18',y:'\x19',z:'\x1a','[':'\x1b',']':'\x1d','\\':'\x1c','/':'\x1f',' ':'\x00','_':'\x1f'};const k=key.length===1?key.toLowerCase():null;if(c&&k&&m[k])s=m[k];else s=key}
-  else{const q={Escape:'\x1b',Tab:'\t',Backspace:'\x7f',Delete:'\x1b[3~',Home:'\x1b[H',End:'\x1b[F',PageUp:'\x1b[5~',PageDown:'\x1b[6~',Insert:'\x1b[2~',Enter:'\r',ArrowUp:'\x1b[A',ArrowDown:'\x1b[B',ArrowLeft:'\x1b[D',ArrowRight:'\x1b[C',F1:'\x1bOP',F2:'\x1bOQ',F3:'\x1bOR',F4:'\x1bOS',F5:'\x1b[15~',F6:'\x1b[17~',F7:'\x1b[18~',F8:'\x1b[19~',F9:'\x1b[20~',F10:'\x1b[21~',F11:'\x1b[23~',F12:'\x1b[24~'};s=q[key]||key}
-  send({a:'i',to:devId,d:s});
+  if(!alive||!hasDev){toast('No device','warn',1500);return}
+  var c=mods.ctrl,a=mods.alt;mods.ctrl=mods.alt=false;
+ document.querySelectorAll('.k[data-m]').forEach(function(e){e.classList.remove('on')});
+  var s='';
+  if(c||a){var map={a:'\x01',b:'\x02',c:'\x03',d:'\x04',e:'\x05',f:'\x06',g:'\x07',h:'\x08',i:'\x09',j:'\x0a',k:'\x0b',l:'\x0c',m:'\x0d',n:'\x0e',o:'\x0f',p:'\x10',q:'\x11',r:'\x12',s:'\x13',t:'\x14',u:'\x15',v:'\x16',w:'\x17',x:'\x18',y:'\x19',z:'\x1a','[':'\x1b',']':'\x1d',"\\":'\x1c','/':'\x1f',' ':'\x00','_':'\x1f'};var k=key.length===1?key.toLowerCase():null;if(c&&k&&map[k])s=map[k];else s=key}
+  else{var q={Escape:'\x1b',Tab:'\t',Backspace:'\x7f',Delete:'\x1b[3~',Home:'\x1b[H',End:'\x1b[F',PageUp:'\x1b[5~',PageDown:'\x1b[6~',Insert:'\x1b[2~',Enter:'\r',ArrowUp:'\x1b[A',ArrowDown:'\x1b[B',ArrowLeft:'\x1b[D',ArrowRight:'\x1b[C',F1:'\x1bOP',F2:'\x1bOQ',F3:'\x1bOR',F4:'\x1bOS',F5:'\x1b[15~',F6:'\x1b[17~',F7:'\x1b[18~',F8:'\x1b[19~',F9:'\x1b[20~',F10:'\x1b[21~',F11:'\x1b[23~',F12:'\x1b[24~'};s=q[key]||key}
+  ws.send(JSON.stringify({t:'i',d:s}));
 }
 
-/* ===== FILES ===== */
-function togFP(){if(!devId){toast('No device','warn');return}$('fp').classList.toggle('open');$('bF').classList.toggle('on');if($('fp').classList.contains('open'))fl()}
-function fl(p){if(!devId)return;if(p===undefined)p=$('fpP').value;$('fpP').value=p;const id='r'+(++rc);pend[id]={t:'l'};$('fpB').innerHTML='<div class="fp-l"><div class="spinner-s"></div> Loading...</div>';send({a:'fr',to:devId,p,m:'list',rid:id})}
-function ff(){if(!devId)return;const p=$('fpP').value,q=prompt('Glob pattern:','*');if(!q)return;const id='r'+(++rc);pend[id]={t:'f'};$('fpB').innerHTML='<div class="fp-l">Searching...</div>';send({a:'fr',to:devId,p,m:'find',q,rid:id})}
-function fr(p){if(!devId)return;const id='r'+(++rc);pend[id]={t:'r',p};$('fpB').innerHTML='<div class="fp-l">Reading...</div>';send({a:'fr',to:devId,p,m:'read',rid:id})}
-function fn(p){fl(p)}
-
-function handleRes(m){
-  const r=pend[m.rid];if(!r)return;delete pend[m.rid];const d=m.d;
-  if(d.success===false){$('fpB').innerHTML='<div style="padding:16px;color:var(--rd);text-align:center;font-size:12px"><i class="fas fa-circle-xmark"></i> '+esc(d.error||'Error')+'</div>';toast(d.error||'Error','err');return}
-  if(r.t==='l'||r.t==='f'){renderF(d.entries||[],d.path||'')}
-  else if(r.t==='r'){$('fpB').innerHTML='';curPath=r.p;$('mT').innerHTML='<i class="fas fa-code"></i> Edit: '+esc(r.p);$('mTa').value=d.content||'';$('mSv').onclick=()=>fSv(curPath);$('mbg').classList.add('show')}
-  else if(r.t==='u'){toast(d.message||'Saved','ok');setTimeout(fl,300)}
-}
-
-function handleFD(m){
-  const r=pend[m.rid];if(!r)return;delete pend[m.rid];const d=m.d;
-  const b=new Blob([d.content],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d.filename||'file';a.click();URL.revokeObjectURL(a.href);toast('Downloaded','ok')
-}
-
-function renderF(entries,path){
-  const el=$('fpB');if(!entries.length){el.innerHTML='<div class="fp-l"><i class="fas fa-folder-open"></i> Empty directory</div>';return}
-  el.innerHTML=entries.map(f=>{const i=f.type==='dir'?'fa-folder':fI(f.name);const sz=f.type==='file'?fSz(f.size):'';const p=escP(path+'/'+f.name);const o=f.type==='dir'?"fn('"+p+"')":"fr('"+p+"')";return '<div class="fi '+(f.type==='dir'?'dir':'')+'" onclick="'+o+'"><i class="fas '+i+'"></i><span class="fn">'+esc(f.name)+'</span><span class="fs">'+sz+'</span></div>'}).join('')
-}
-
-function fu(){if(!devId)return;const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(!f)return;toast('Uploading '+f.name,'info',2000);const r=new FileReader();r.onload=ev=>{const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+f.name,c:ev.target.result,rid:id})};r.readAsText(f)};i.click()}
-function fc(){if(!devId)return;curPath=null;$('mT').innerHTML='<i class="fas fa-plus"></i> Create File';$('mTa').value='';$('mSv').onclick=fCr2;$('mbg').classList.add('show')}
-function fCr2(){const n=prompt('File name:');if(!n)return;const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p:$('fpP').value+'/'+n,c:$('mTa').value,rid:id});cm();toast('Creating file...','info',1500)}
-function fSv(p){const id='r'+(++rc);pend[id]={t:'u'};send({a:'fu',to:devId,p,c:$('mTa').value,rid:id});cm();toast('Saving...','info',1500)}
-function cm(){$('mbg').classList.remove('show')}
-
-/* ===== HELPERS ===== */
-function fI(n){const e=n.split('.').pop().toLowerCase();const m={py:'fa-file-code',js:'fa-file-code',html:'fa-file-code',css:'fa-file-code',json:'fa-file-code',sh:'fa-file-code',ts:'fa-file-code',txt:'fa-file-lines',md:'fa-file-lines',jpg:'fa-file-image',png:'fa-file-image',gif:'fa-file-image',svg:'fa-file-image',zip:'fa-file-zipper',tar:'fa-file-zipper',gz:'fa-file-zipper',mp3:'fa-file-audio',mp4:'fa-file-video',pdf:'fa-file-pdf'};return m[e]||'fa-file'}
-function fSz(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'}
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function escP(p){return p.replace(/'/g,"\\'")}
-
-/* ===== INIT ===== */
-window.addEventListener('DOMContentLoaded',()=>{
-  initT();
-  const p=new URLSearchParams(location.search);
-  if(p.get('token')){tk=p.get('token');$('tkI').value=tk}
-  $('tkI').addEventListener('keydown',e=>{if(e.key==='Enter')go()});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!alive&&rCnt>0){clearTimeout(rTmr);openWS()}});
+window.addEventListener('DOMContentLoaded',function(){
+  initTerm();
+  $('tkI').addEventListener('keydown',function(e){if(e.key==='Enter')go()});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&!alive&&rCnt>0){clearTimeout(rTmr);doConnect()}});
 });
 </script>
 </body>
